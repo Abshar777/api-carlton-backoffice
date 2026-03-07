@@ -14349,6 +14349,18 @@ app.add_middleware(
 )
 
 
+# Middleware to log request origin
+@app.middleware("http")
+async def log_request_origin(request: Request, call_next):
+    origin = request.headers.get("origin", "No Origin Header")
+    print(f"[REQUEST] Origin: {origin} | Method: {request.method} | Path: {request.url.path}")
+    response = await call_next(request)
+    print(f"[RESPONSE] Status: {response.status_code} | Origin: {origin}")
+    return response
+
+
+
+
 @app.on_event("startup")
 async def startup_db_indexes():
     """Create database indexes and start scheduler"""
