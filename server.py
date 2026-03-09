@@ -126,6 +126,7 @@ class Modules:
     USERS = "users"
     ROLES = "roles"
     MESSAGES = "messages"
+    APPROVALS = "approvals"
 
 # Standard actions
 class Actions:
@@ -142,7 +143,8 @@ ALL_MODULES = [
     Modules.LP_MANAGEMENT, Modules.INCOME_EXPENSES, Modules.LOANS, Modules.DEBTS,
     Modules.PSP, Modules.EXCHANGERS, Modules.RECONCILIATION, Modules.AUDIT,
     Modules.LOGS, Modules.REPORTS, Modules.SETTINGS, Modules.USERS, Modules.ROLES,
-    Modules.MESSAGES
+    Modules.MESSAGES,
+    Modules.APPROVALS
 ]
 
 # All actions list
@@ -167,7 +169,8 @@ MODULE_DISPLAY_NAMES = {
     Modules.SETTINGS: "Settings",
     Modules.USERS: "Users",
     Modules.ROLES: "Roles & Permissions",
-    Modules.MESSAGES: "Messages"
+    Modules.MESSAGES: "Messages",
+    Modules.APPROVALS: "Pending Approvals"
 }
 
 class RoleCreate(BaseModel):
@@ -1630,9 +1633,21 @@ async def delete_client_bank_account(request: Request, client_id: str, bank_acco
 @api_router.get("/treasury")
 async def get_treasury_accounts(user: dict = Depends(require_permission(Modules.TREASURY, Actions.VIEW))):
     accounts = await db.treasury_accounts.find({}, {"_id": 0}).to_list(1000)
-    # Add USD equivalent for each account
+    
+    # Get manual FX rates from settings
+    fx_settings = await db.app_settings.find_one({"setting_type": "manual_fx_rates"}, {"_id": 0})
+    manual_rates = fx_settings.get("rates", {}) if fx_settings else {}
+    
     for acc in accounts:
-        acc["balance_usd"] = convert_to_usd(acc.get("balance", 0), acc.get("currency", "USD"))
+        currency = acc.get("currency", "USD")
+        balance = acc.get("balance", 0)
+        if currency == "USD":
+            acc["balance_usd"] = balance
+        elif currency in manual_rates and manual_rates[currency] > 0:
+            acc["balance_usd"] = round(balance * manual_rates[currency], 2)
+        else:
+            acc["balance_usd"] = None  # No conversion available
+    
     return accounts
 
 @api_router.get("/treasury/{account_id}")
@@ -1752,9 +1767,7 @@ async def get_treasury_history(
                 # If the transaction has base_amount in the same currency as the account, use it
                 if tx.get("base_currency") == account_currency and tx.get("base_amount"):
                     display_amount = tx.get("base_amount")
-                else:
-                    # Convert USD amount to account currency
-                    display_amount = convert_from_usd(tx.get("amount", 0), account_currency)
+                # Otherwise keep USD amount (no live FX conversion)
             
             treasury_txs.append({
                 "treasury_transaction_id": tx.get("transaction_id"),
@@ -2549,7 +2562,7 @@ async def send_dealing_pnl_email(date: str, user: dict = Depends(require_permiss
     <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;">
         <div style="max-width:600px;margin:0 auto;background-color:#0B0C10;color:white;">
             <div style="background:linear-gradient(135deg,#1F2833 0%,#0B0C10 100%);padding:30px;text-align:center;border-bottom:3px solid #66FCF1;">
-                <h1 style="color:#66FCF1;margin:0;font-size:24px;letter-spacing:2px;">MILES CAPITALS</h1>
+                <h1 style="color:#66FCF1;margin:0;font-size:24px;letter-spacing:2px;">CARLTON FX</h1>
                 <p style="color:#C5C6C7;margin:10px 0 0;font-size:14px;">Dealing P&L Report - {date}</p>
             </div>
             
@@ -2611,7 +2624,7 @@ async def send_dealing_pnl_email(date: str, user: dict = Depends(require_permiss
             </div>
             
             <div style="background-color:#1F2833;padding:20px;text-align:center;border-top:1px solid #333;">
-                <p style="color:#C5C6C7;font-size:12px;margin:0;">This is an automated Dealing P&L report from Miles Capitals</p>
+                <p style="color:#C5C6C7;font-size:12px;margin:0;">This is an automated Dealing P&L report from CARLTON FX</p>
                 <p style="color:#C5C6C7;font-size:12px;margin:5px 0 0;">Submitted by: {user.get('name', 'Unknown')}</p>
             </div>
         </div>
@@ -3788,7 +3801,6 @@ async def get_global_reserve_fund_summary(user: dict = Depends(require_permissio
     }
 
 # ============== VENDOR ROUTES ==============
-# ============== VENDOR ROUTES ==============
 
 @api_router.get("/vendors")
 async def get_vendors(
@@ -3978,7 +3990,6 @@ async def get_vendors(
     set_cached(cache_key, response, CACHE_TTL['vendors_list'])
     
     return response
-
 
 @api_router.get("/vendors/{vendor_id}")
 async def get_vendor(vendor_id: str, user: dict = Depends(require_permission(Modules.EXCHANGERS, Actions.VIEW))):
@@ -6165,9 +6176,18 @@ async def get_dashboard_stats(user: dict = Depends(require_permission(Modules.DA
     total_treasury = await db.treasury_accounts.count_documents({})
     active_treasury = await db.treasury_accounts.count_documents({"status": TreasuryAccountStatus.ACTIVE})
     
-    # Get total treasury balance in USD (converting all currencies)
+    # Get total treasury balance using manual FX rates
     all_accounts = await db.treasury_accounts.find({"status": TreasuryAccountStatus.ACTIVE}, {"_id": 0}).to_list(1000)
-    total_balance_usd = sum(convert_to_usd(acc.get("balance", 0), acc.get("currency", "USD")) for acc in all_accounts)
+    fx_settings = await db.app_settings.find_one({"setting_type": "manual_fx_rates"}, {"_id": 0})
+    manual_rates = fx_settings.get("rates", {}) if fx_settings else {}
+    total_balance_usd = 0
+    for acc in all_accounts:
+        currency = acc.get("currency", "USD")
+        balance = acc.get("balance", 0)
+        if currency == "USD":
+            total_balance_usd += balance
+        elif currency in manual_rates and manual_rates[currency] > 0:
+            total_balance_usd += balance * manual_rates[currency]
     
     # Get transaction stats
     total_transactions = await db.transactions.count_documents({})
@@ -10473,6 +10493,138 @@ async def get_reconciliation_daily_summary(
     }
 
 
+@api_router.get("/reconciliation/pending")
+async def get_pending_reconciliation(
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    account_type: Optional[str] = None,
+    user: dict = Depends(require_permission(Modules.RECONCILIATION, Actions.VIEW))
+):
+    """Get all dates/accounts with pending (unreconciled) transactions"""
+    from collections import defaultdict
+    
+    days_back = 180
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days_back)).isoformat()[:10]
+    start = date_from or cutoff
+    end = date_to or datetime.now(timezone.utc).isoformat()[:10]
+    start_iso = f"{start}T00:00:00"
+    end_iso = f"{end}T23:59:59"
+    
+    # Get all reconciliation records to know what's been reconciled
+    recon_records = await db.reconciliations.find(
+        {"date": {"$gte": start, "$lte": end}},
+        {"_id": 0, "date": 1, "account_type": 1, "account_id": 1, "status": 1, "matched_count": 1, "flagged_count": 1}
+    ).to_list(5000)
+    reconciled_keys = set()
+    for r in recon_records:
+        if r.get("status") == "completed":
+            reconciled_keys.add(f"{r.get('date')}_{r.get('account_type')}_{r.get('account_id')}")
+    
+    pending_items = []
+    
+    # --- Treasury transactions ---
+    if not account_type or account_type == "treasury":
+        treasury_accounts = await db.treasury_accounts.find({}, {"_id": 0, "account_id": 1, "account_name": 1, "currency": 1}).to_list(100)
+        acc_map = {a["account_id"]: a for a in treasury_accounts}
+        
+        tx_pipeline = [
+            {"$match": {"created_at": {"$gte": start_iso, "$lte": end_iso}}},
+            {"$project": {"date": {"$substr": ["$created_at", 0, 10]}, "account_id": 1, "amount": 1}},
+            {"$group": {"_id": {"date": "$date", "account_id": "$account_id"}, "count": {"$sum": 1}, "total_amount": {"$sum": {"$abs": "$amount"}}}}
+        ]
+        treasury_txs = await db.treasury_transactions.aggregate(tx_pipeline).to_list(5000)
+        
+        for item in treasury_txs:
+            dt = item["_id"]["date"]
+            aid = item["_id"]["account_id"]
+            key = f"{dt}_treasury_{aid}"
+            if key not in reconciled_keys:
+                acc = acc_map.get(aid, {})
+                pending_items.append({
+                    "date": dt,
+                    "account_type": "treasury",
+                    "account_id": aid,
+                    "account_name": acc.get("account_name", "Unknown"),
+                    "currency": acc.get("currency", "USD"),
+                    "pending_count": item["count"],
+                    "total_amount": round(item["total_amount"], 2),
+                    "status": "pending"
+                })
+    
+    # --- PSP transactions ---
+    if not account_type or account_type == "psp":
+        psps = await db.psps.find({}, {"_id": 0, "psp_id": 1, "psp_name": 1}).to_list(100)
+        psp_map = {p["psp_id"]: p for p in psps}
+        
+        psp_pipeline = [
+            {"$match": {"psp_id": {"$exists": True, "$ne": None}, "created_at": {"$gte": start_iso, "$lte": end_iso}, "status": {"$in": ["approved", "completed", "pending"]}}},
+            {"$project": {"date": {"$substr": ["$created_at", 0, 10]}, "psp_id": 1, "amount": 1}},
+            {"$group": {"_id": {"date": "$date", "psp_id": "$psp_id"}, "count": {"$sum": 1}, "total_amount": {"$sum": "$amount"}}}
+        ]
+        psp_txs = await db.transactions.aggregate(psp_pipeline).to_list(5000)
+        
+        for item in psp_txs:
+            dt = item["_id"]["date"]
+            pid = item["_id"]["psp_id"]
+            key = f"{dt}_psp_{pid}"
+            if key not in reconciled_keys:
+                psp = psp_map.get(pid, {})
+                pending_items.append({
+                    "date": dt,
+                    "account_type": "psp",
+                    "account_id": pid,
+                    "account_name": psp.get("psp_name", "Unknown"),
+                    "currency": "USD",
+                    "pending_count": item["count"],
+                    "total_amount": round(item["total_amount"], 2),
+                    "status": "pending"
+                })
+    
+    # --- Exchanger transactions ---
+    if not account_type or account_type == "exchanger":
+        vendors = await db.vendors.find({}, {"_id": 0, "vendor_id": 1, "vendor_name": 1}).to_list(100)
+        vendor_map = {v["vendor_id"]: v for v in vendors}
+        
+        vendor_pipeline = [
+            {"$match": {"vendor_id": {"$exists": True, "$ne": None}, "created_at": {"$gte": start_iso, "$lte": end_iso}, "status": {"$in": ["approved", "completed", "pending"]}}},
+            {"$project": {"date": {"$substr": ["$created_at", 0, 10]}, "vendor_id": 1, "amount": 1}},
+            {"$group": {"_id": {"date": "$date", "vendor_id": "$vendor_id"}, "count": {"$sum": 1}, "total_amount": {"$sum": "$amount"}}}
+        ]
+        vendor_txs = await db.transactions.aggregate(vendor_pipeline).to_list(5000)
+        
+        for item in vendor_txs:
+            dt = item["_id"]["date"]
+            vid = item["_id"]["vendor_id"]
+            key = f"{dt}_exchanger_{vid}"
+            if key not in reconciled_keys:
+                v = vendor_map.get(vid, {})
+                pending_items.append({
+                    "date": dt,
+                    "account_type": "exchanger",
+                    "account_id": vid,
+                    "account_name": v.get("vendor_name", "Unknown"),
+                    "currency": "USD",
+                    "pending_count": item["count"],
+                    "total_amount": round(item["total_amount"], 2),
+                    "status": "pending"
+                })
+    
+    # Sort by date descending
+    pending_items.sort(key=lambda x: x["date"], reverse=True)
+    
+    # Summary
+    total_pending = sum(p["pending_count"] for p in pending_items)
+    unique_dates = len(set(p["date"] for p in pending_items))
+    
+    return {
+        "items": pending_items,
+        "total_pending_transactions": total_pending,
+        "unique_dates": unique_dates,
+        "total_items": len(pending_items)
+    }
+
+
+
 @api_router.get("/reconciliation/account-history")
 async def get_account_history_for_reconciliation(
     type: str,
@@ -10804,6 +10956,15 @@ async def get_calendar_status(
 
 
 # ============== INTERNAL MESSAGING SYSTEM ==============
+
+
+@api_router.get("/messages/users")
+async def get_users_for_messaging(user: dict = Depends(get_current_user)):
+    """Get all users for message recipient selection (lightweight, no admin permission needed)"""
+    users = await db.users.find({}, {"_id": 0, "user_id": 1, "name": 1, "email": 1, "role": 1}).to_list(500)
+    # Filter out current user
+    return [u for u in users if u.get("user_id") != user["user_id"]]
+
 
 @api_router.get("/messages/unread-count")
 async def get_unread_messages_count(user: dict = Depends(get_current_user)):
@@ -12173,11 +12334,11 @@ async def test_email_settings(user: dict = Depends(require_permission(Modules.SE
     try:
         await send_email(
             to_emails=settings["director_emails"],
-            subject="Miles Capitals - Test Email",
+            subject="CARLTON FX - Test Email",
             html_content=f"""
             <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #0B0C10; color: white;">
                 <h2 style="color: #66FCF1;">Test Email Successful!</h2>
-                <p>This is a test email from Miles Capitals Back Office.</p>
+                <p>This is a test email from CARLTON FX Back Office.</p>
                 <p>If you received this, your email settings are configured correctly.</p>
                 <p style="color: #C5C6C7; font-size: 12px;">Sent at: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
             </div>
@@ -12231,7 +12392,7 @@ async def send_daily_report_now(user: dict = Depends(require_permission(Modules.
         
         # Send to all directors
         now = datetime.now(timezone.utc)
-        subject = f"Miles Capitals Daily Report - {now.strftime('%Y-%m-%d')}"
+        subject = f"CARLTON FX Daily Report - {now.strftime('%Y-%m-%d')}"
         
         await send_email(
             to_emails=director_emails,
@@ -12727,7 +12888,7 @@ async def generate_daily_report_html():
     <body>
         <div class="container">
             <div class="header">
-                <h1>MILES CAPITALS</h1>
+                <h1>CARLTON FX</h1>
                 <p>Daily Business Report - {now.strftime('%B %d, %Y')}</p>
             </div>
             
@@ -12895,7 +13056,7 @@ async def generate_daily_report_html():
             </div>
             
             <div class="footer">
-                <p>This is an automated report from Miles Capitals Back Office</p>
+                <p>This is an automated report from CARLTON FX Back Office</p>
                 <p>Generated at {now.strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
             </div>
         </div>
@@ -12926,7 +13087,7 @@ async def send_daily_report():
         
         await send_email(
             to_emails=settings["director_emails"],
-            subject=f"Miles Capitals - Daily Report ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
+            subject=f"CARLTON FX - Daily Report ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
             html_content=html_content,
             smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
             smtp_port=settings.get("smtp_port", 587),
@@ -12972,7 +13133,7 @@ async def send_report_now(user: dict = Depends(require_permission(Modules.REPORT
         
         await send_email(
             to_emails=settings["director_emails"],
-            subject=f"Miles Capitals - Daily Report ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
+            subject=f"CARLTON FX - Daily Report ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
             html_content=html_content,
             smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
             smtp_port=settings.get("smtp_port", 587),
@@ -13238,7 +13399,7 @@ async def generate_monthly_report_html(year: int = None, month: int = None):
     <body>
         <div class="container">
             <div class="header">
-                <h1>MILES CAPITALS</h1>
+                <h1>CARLTON FX</h1>
                 <p>Monthly Report - {month_name} {year}</p>
                 <p style="font-size:12px; color:#66FCF1;">{month_start} to {month_end}</p>
             </div>
@@ -13407,7 +13568,7 @@ async def generate_monthly_report_html(year: int = None, month: int = None):
 
             </div>
             <div class="footer">
-                <p>Miles Capitals - Monthly Report | Generated {now.strftime('%Y-%m-%d %H:%M UTC')}</p>
+                <p>CARLTON FX - Monthly Report | Generated {now.strftime('%Y-%m-%d %H:%M UTC')}</p>
                 <p style="margin-top:5px; font-size:10px; color:#666;">This is an automated report. Please contact admin for any discrepancies.</p>
             </div>
         </div>
@@ -13442,7 +13603,7 @@ async def send_monthly_report():
         
         await send_email(
             to_emails=settings["director_emails"],
-            subject=f"Miles Capitals - Monthly Report ({month_name} {now.year})",
+            subject=f"CARLTON FX - Monthly Report ({month_name} {now.year})",
             html_content=html_content,
             smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
             smtp_port=settings.get("smtp_port", 587),
@@ -13512,7 +13673,7 @@ async def send_monthly_report_now(
         
         await send_email(
             to_emails=settings["director_emails"],
-            subject=f"Miles Capitals - Monthly Report ({month_name} {y})",
+            subject=f"CARLTON FX - Monthly Report ({month_name} {y})",
             html_content=html_content,
             smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
             smtp_port=settings.get("smtp_port", 587),
@@ -13866,7 +14027,7 @@ async def send_audit_alert_email(result: dict):
         
         html = f"""
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0B0C10;color:#C5C6C7;padding:20px;border-radius:8px;">
-            <h1 style="color:#66FCF1;margin-bottom:4px;">Miles Capitals - Audit Alert</h1>
+            <h1 style="color:#66FCF1;margin-bottom:4px;">CARLTON FX - Audit Alert</h1>
             <p style="color:#888;margin-top:0;">{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}</p>
             <div style="text-align:center;margin:20px 0;">
                 <div style="display:inline-block;width:80px;height:80px;border-radius:50%;border:4px solid {color};line-height:80px;font-size:28px;font-weight:bold;color:{color};">{score}</div>
@@ -13891,7 +14052,7 @@ async def send_audit_alert_email(result: dict):
         
         await send_email(
             to_emails=audit_settings["alert_emails"],
-            subject=f"Miles Capitals - Audit Alert (Score: {score}/100)",
+            subject=f"CARLTON FX - Audit Alert (Score: {score}/100)",
             html_content=html,
             smtp_host=smtp_settings.get("smtp_host", "smtp.gmail.com"),
             smtp_port=smtp_settings.get("smtp_port", 587),
@@ -13965,6 +14126,43 @@ async def refresh_fx_rates(user: dict = Depends(require_permission(Modules.SETTI
         "fetched_at": _fx_cache.get("fetched_at", "").isoformat() if _fx_cache.get("fetched_at") else None,
         "sample_rates": {k: rates.get(k) for k in ["USD", "EUR", "GBP", "AED", "INR"] if k in rates},
     }
+
+@api_router.get("/settings/manual-fx-rates")
+async def get_manual_fx_rates(user: dict = Depends(require_permission(Modules.SETTINGS, Actions.VIEW))):
+    """Get manual FX rates (1 unit of currency = X USD)"""
+    settings = await db.app_settings.find_one({"setting_type": "manual_fx_rates"}, {"_id": 0})
+    return {
+        "rates": settings.get("rates", {}) if settings else {},
+        "updated_at": settings.get("updated_at") if settings else None,
+        "updated_by_name": settings.get("updated_by_name") if settings else None,
+    }
+
+@api_router.put("/settings/manual-fx-rates")
+async def update_manual_fx_rates(
+    request: Request,
+    data: dict = Body(...),
+    user: dict = Depends(require_permission(Modules.SETTINGS, Actions.EDIT))
+):
+    """Update manual FX rates. Body: {rates: {INR: 0.012, AED: 0.272, ...}}"""
+    rates = data.get("rates", {})
+    now = datetime.now(timezone.utc)
+    
+    await db.app_settings.update_one(
+        {"setting_type": "manual_fx_rates"},
+        {"$set": {
+            "setting_type": "manual_fx_rates",
+            "rates": rates,
+            "updated_at": now.isoformat(),
+            "updated_by": user["user_id"],
+            "updated_by_name": user["name"]
+        }},
+        upsert=True
+    )
+    
+    await log_activity(request, user, "edit", "settings", "Updated manual FX rates")
+    return {"message": "Manual FX rates updated", "rates": rates}
+
+
 
 @api_router.get("/fx-rates/convert")
 async def convert_currency_endpoint(
@@ -14330,6 +14528,7 @@ async def get_impersonation_logs(
         {}, {"_id": 0}
     ).sort("login_time", -1).to_list(limit)
     return logs
+
 
 # Include router
 app.include_router(api_router)
