@@ -1185,13 +1185,98 @@ async def login(credentials: UserLogin, request: Request):
         
         if smtp_email and smtp_password:
             try:
-                otp_html = f"""<div style="font-family:Arial,sans-serif;max-width:400px;margin:0 auto;padding:30px;background:#0B0C10;color:white;border-radius:8px;">
-                    <h2 style="color:#66FCF1;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
-                    <p style="color:#C5C6C7;text-align:center;">Your login verification code:</p>
-                    <div style="background:#1F2833;padding:20px;border-radius:8px;text-align:center;margin:20px 0;">
-                        <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#66FCF1;">{otp_code}</span>
-                    </div>
-                    <p style="color:#C5C6C7;text-align:center;font-size:12px;">This code expires in 5 minutes. Do not share it.</p></div>"""
+               otp_html = f"""
+                 <!doctype html>
+                 <html>
+                 <head>
+                 <meta charset="UTF-8">
+                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                 <title>Carlton FX</title>
+                 </head>
+                 
+                 <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+                 
+                 <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
+                 <tr>
+                 <td align="center">
+                 
+                 <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
+                 
+                 <!-- Header -->
+                 <tr>
+                 <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
+                 <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png"
+                 alt="Carlton FX"
+                 width="180"
+                 style="display:block;margin-bottom:10px;" />
+                 </td>
+                 </tr>
+                 
+                 <!-- Body -->
+                 <tr>
+                 <td style="padding:40px 30px;color:#333333;font-size:15px;line-height:1.6;">
+                 
+                 <p style="margin-top:0;">Dear <strong>Client</strong>,</p>
+                 
+                 <p>
+                 We received a request to log in to your
+                 <strong style="color:#1ea21a;">Carlton FX</strong> account.
+                 Please use the verification code below to continue.
+                 </p>
+                 
+                 <!-- OTP Box -->
+                 <table cellpadding="0" cellspacing="0" width="100%" style="margin:30px 0;">
+                 <tr>
+                 <td align="center">
+                 <div style="background:#f4f6f8;padding:20px;border-radius:6px;display:inline-block;">
+                 <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#1ea21a;">
+                 {otp_code}
+                 </span>
+                 </div>
+                 </td>
+                 </tr>
+                 </table>
+                 
+                 <p style="text-align:center;color:#666;font-size:13px;">
+                 This code will expire in <strong>5 minutes</strong>.  
+                 For security reasons, please do not share this code with anyone.
+                 </p>
+                 
+                 <p>
+                 If you did not request this login attempt, please secure your account
+                 or contact our support team immediately.
+                 </p>
+                 
+                 <p>
+                 Best Regards,<br>
+                 <strong style="color:#1ea21a;">Carlton FX Team</strong>
+                 </p>
+                 
+                 </td>
+                 </tr>
+                 
+                 <!-- Divider -->
+                 <tr>
+                 <td style="border-top:1px solid #eeeeee"></td>
+                 </tr>
+                 
+                 <!-- Footer -->
+                 <tr>
+                 <td align="center" style="padding:25px 20px;font-size:12px;color:#888888">
+                 <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
+                 <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+                 </td>
+                 </tr>
+                 
+                 </table>
+                 
+                 </td>
+                 </tr>
+                 </table>
+                 
+                 </body>
+                 </html>
+                 """
                 await send_email(
                     to_emails=[user["email"]], subject="CARLTON FX - Login Verification Code",
                     html_content=otp_html, smtp_host=smtp_host,
@@ -1371,13 +1456,98 @@ async def forgot_password(data: dict = Body(...)):
     
     if smtp_email and smtp_password:
         try:
-            reset_html = f"""<div style="font-family:Arial,sans-serif;max-width:400px;margin:0 auto;padding:30px;background:#0B0C10;color:white;border-radius:8px;">
-                <h2 style="color:#66FCF1;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
-                <p style="color:#C5C6C7;text-align:center;">Password Reset Code</p>
-                <div style="background:#1F2833;padding:20px;border-radius:8px;text-align:center;margin:20px 0;">
-                    <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#66FCF1;">{otp_code}</span>
-                </div>
-                <p style="color:#C5C6C7;text-align:center;font-size:12px;">This code expires in 10 minutes. If you didn't request this, ignore this email.</p></div>"""
+           reset_html = f"""
+            <!doctype html>
+            <html>
+            <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Carlton FX</title>
+            </head>
+            
+            <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+            
+            <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
+            <tr>
+            <td align="center">
+            
+            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
+            
+            <!-- Header -->
+            <tr>
+            <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
+            <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png"
+            alt="Carlton FX"
+            width="180"
+            style="display:block;margin-bottom:10px;" />
+            </td>
+            </tr>
+            
+            <!-- Body -->
+            <tr>
+            <td style="padding:40px 30px;color:#333333;font-size:15px;line-height:1.6;">
+            
+            <p style="margin-top:0;">Dear <strong>Client</strong>,</p>
+            
+            <p>
+            We received a request to reset the password for your
+            <strong style="color:#1ea21a;">Carlton FX</strong> account.
+            Please use the verification code below to continue with resetting your password.
+            </p>
+            
+            <!-- OTP Box -->
+            <table cellpadding="0" cellspacing="0" width="100%" style="margin:30px 0;">
+            <tr>
+            <td align="center">
+            <div style="background:#f4f6f8;padding:20px;border-radius:6px;display:inline-block;">
+            <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#1ea21a;">
+            {otp_code}
+            </span>
+            </div>
+            </td>
+            </tr>
+            </table>
+            
+            <p style="text-align:center;color:#666;font-size:13px;">
+            This code will expire in <strong>10 minutes</strong>.
+            If you did not request a password reset, please ignore this email.
+            </p>
+            
+            <p>
+            For security reasons, never share your verification code with anyone.
+            If you need assistance, our support team is always available.
+            </p>
+            
+            <p>
+            Best Regards,<br>
+            <strong style="color:#1ea21a;">Carlton FX Team</strong>
+            </p>
+            
+            </td>
+            </tr>
+            
+            <!-- Divider -->
+            <tr>
+            <td style="border-top:1px solid #eeeeee"></td>
+            </tr>
+            
+            <!-- Footer -->
+            <tr>
+            <td align="center" style="padding:25px 20px;font-size:12px;color:#888888">
+            <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
+            <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+            </td>
+            </tr>
+            
+            </table>
+            
+            </td>
+            </tr>
+            </table>
+            
+            </body>
+            </html>
+            """
             await send_email(
                 to_emails=[email], subject="CARLTON FX - Password Reset Code",
                 html_content=reset_html, smtp_host=smtp_host, smtp_port=smtp_port,
@@ -2820,85 +2990,165 @@ async def send_dealing_pnl_email(date: str, user: dict = Depends(require_permiss
     mt5_color = "#4ade80" if broker_mt5_pnl >= 0 else "#f87171"
     lp_color = "#4ade80" if total_broker_lp_pnl >= 0 else "#f87171"
     
-    # Generate email HTML
     html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-    </head>
-    <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;">
-        <div style="max-width:600px;margin:0 auto;background-color:#0B0C10;color:white;">
-            <div style="background:linear-gradient(135deg,#1F2833 0%,#0B0C10 100%);padding:30px;text-align:center;border-bottom:3px solid #66FCF1;">
-                <h1 style="color:#66FCF1;margin:0;font-size:24px;letter-spacing:2px;">CARLTON FX</h1>
-                <p style="color:#C5C6C7;margin:10px 0 0;font-size:14px;">Dealing P&L Report - {date}</p>
-            </div>
-            
-            <div style="padding:30px;">
-                <div style="background-color:#1F2833;border-radius:8px;padding:20px;margin-bottom:20px;">
-                    <h2 style="color:#66FCF1;font-size:16px;margin:0 0 20px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #66FCF1;padding-bottom:10px;">📈 Daily Dealing P&L</h2>
-                    
-                    <div style="text-align:center;background-color:#0B0C10;border-radius:6px;padding:25px;margin-bottom:20px;">
-                        <div style="color:#C5C6C7;font-size:11px;text-transform:uppercase;letter-spacing:1px;">TOTAL DEALING P&L</div>
-                        <div style="color:{total_color};font-size:42px;font-weight:bold;margin-top:5px;">${total_dealing_pnl:+,.0f}</div>
-                        <div style="color:#C5C6C7;font-size:12px;margin-top:5px;">USD</div>
-                    </div>
-                    
-                    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-                        <tr>
-                            <td style="width:50%;padding:15px;background-color:#0B0C10;border-radius:6px;">
-                                <div style="color:#C5C6C7;font-size:11px;text-transform:uppercase;">MT5 Broker P&L</div>
-                                <div style="color:{mt5_color};font-size:24px;font-weight:bold;margin-top:5px;">${broker_mt5_pnl:+,.0f}</div>
-                            </td>
-                            <td style="width:10px;"></td>
-                            <td style="width:50%;padding:15px;background-color:#0B0C10;border-radius:6px;">
-                                <div style="color:#C5C6C7;font-size:11px;text-transform:uppercase;">LP Hedging P&L</div>
-                                <div style="color:{lp_color};font-size:24px;font-weight:bold;margin-top:5px;">${total_broker_lp_pnl:+,.0f}</div>
-                            </td>
-                        </tr>
-                    </table>
-                    
-                    <div style="background-color:#0B0C10;border-radius:6px;padding:15px;margin-bottom:15px;">
-                        <h4 style="color:#66FCF1;font-size:12px;margin:0 0 10px;text-transform:uppercase;">MT5 Details</h4>
-                        <table style="width:100%;border-collapse:collapse;">
-                            <tr>
-                                <td style="color:#C5C6C7;font-size:12px;padding:5px 0;">Client Booked P&L:</td>
-                                <td style="color:white;font-size:14px;text-align:right;">${mt5_booked:+,.0f}</td>
-                            </tr>
-                            <tr>
-                                <td style="color:#C5C6C7;font-size:12px;padding:5px 0;">Running Floating:</td>
-                                <td style="color:white;font-size:14px;text-align:right;">${mt5_floating:,.0f}</td>
-                            </tr>
-                            <tr>
-                                <td style="color:#C5C6C7;font-size:12px;padding:5px 0;">Floating Change:</td>
-                                <td style="color:white;font-size:14px;text-align:right;">${mt5_floating_change:+,.0f}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    
-                    {f'''<div style="background-color:#0B0C10;border-radius:6px;padding:15px;">
-                        <h4 style="color:#66FCF1;font-size:12px;margin:0 0 10px;text-transform:uppercase;">LP Breakdown</h4>
-                        <table style="width:100%;border-collapse:collapse;">
-                            <tr>
-                                <th style="padding:8px;border-bottom:1px solid #333;color:#66FCF1;font-size:11px;text-align:left;">LP</th>
-                                <th style="padding:8px;border-bottom:1px solid #333;color:#66FCF1;font-size:11px;text-align:right;">Booked</th>
-                                <th style="padding:8px;border-bottom:1px solid #333;color:#66FCF1;font-size:11px;text-align:right;">Floating</th>
-                                <th style="padding:8px;border-bottom:1px solid #333;color:#66FCF1;font-size:11px;text-align:right;">P&L</th>
-                            </tr>
-                            {lp_rows}
-                        </table>
-                    </div>''' if lp_rows else ''}
-                </div>
-            </div>
-            
-            <div style="background-color:#1F2833;padding:20px;text-align:center;border-top:1px solid #333;">
-                <p style="color:#C5C6C7;font-size:12px;margin:0;">This is an automated Dealing P&L report from CARLTON FX</p>
-                <p style="color:#C5C6C7;font-size:12px;margin:5px 0 0;">Submitted by: {user.get('name', 'Unknown')}</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
+          <!doctype html>
+          <html>
+          <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Carlton FX</title>
+          </head>
+          
+          <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+          
+          <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
+          <tr>
+          <td align="center">
+          
+          <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
+          
+          <!-- Header -->
+          <tr>
+          <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
+          <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png"
+          alt="Carlton FX"
+          width="180"
+          style="display:block;margin-bottom:10px;" />
+          <p style="margin:0;color:#666;font-size:14px;">
+          Dealing P&L Report - {date}
+          </p>
+          </td>
+          </tr>
+          
+          <!-- Body -->
+          <tr>
+          <td style="padding:40px 30px;color:#333;font-size:15px;line-height:1.6;">
+          
+          <h2 style="color:#1ea21a;margin-top:0;">Daily Dealing P&L</h2>
+          
+          <!-- Total PNL -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;">
+          <tr>
+          <td align="center" style="background:#f4f6f8;border-radius:6px;padding:25px;">
+          <div style="font-size:12px;color:#666;text-transform:uppercase;">
+          Total Dealing P&L
+          </div>
+          
+          <div style="font-size:36px;font-weight:bold;margin-top:5px;color:{total_color};">
+          ${total_dealing_pnl:+,.0f}
+          </div>
+          
+          <div style="font-size:12px;color:#666;margin-top:4px;">
+          USD
+          </div>
+          </td>
+          </tr>
+          </table>
+          
+          <!-- Summary -->
+          <table width="100%" style="border-collapse:collapse;margin-bottom:20px;">
+          
+          <tr>
+          <td style="padding:12px;background:#f4f6f8;border-radius:6px;">
+          <div style="font-size:12px;color:#666;">MT5 Broker P&L</div>
+          <div style="font-size:22px;font-weight:bold;color:{mt5_color};">
+          ${broker_mt5_pnl:+,.0f}
+          </div>
+          </td>
+          
+          <td width="10"></td>
+          
+          <td style="padding:12px;background:#f4f6f8;border-radius:6px;">
+          <div style="font-size:12px;color:#666;">LP Hedging P&L</div>
+          <div style="font-size:22px;font-weight:bold;color:{lp_color};">
+          ${total_broker_lp_pnl:+,.0f}
+          </div>
+          </td>
+          </tr>
+          
+          </table>
+          
+          <!-- MT5 Details -->
+          <table width="100%" style="border-collapse:collapse;margin-bottom:20px;">
+          
+          <tr>
+          <td colspan="2" style="padding-bottom:8px;font-weight:bold;color:#1ea21a;">
+          MT5 Details
+          </td>
+          </tr>
+          
+          <tr>
+          <td style="padding:6px 0;color:#666;">Client Booked P&L</td>
+          <td style="text-align:right;">${mt5_booked:+,.0f}</td>
+          </tr>
+          
+          <tr>
+          <td style="padding:6px 0;color:#666;">Running Floating</td>
+          <td style="text-align:right;">${mt5_floating:,.0f}</td>
+          </tr>
+          
+          <tr>
+          <td style="padding:6px 0;color:#666;">Floating Change</td>
+          <td style="text-align:right;">${mt5_floating_change:+,.0f}</td>
+          </tr>
+          
+          </table>
+          
+          {f'''
+          <!-- LP Breakdown -->
+          <table width="100%" style="border-collapse:collapse;margin-top:20px;">
+          
+          <tr>
+          <td colspan="4" style="padding-bottom:10px;font-weight:bold;color:#1ea21a;">
+          LP Breakdown
+          </td>
+          </tr>
+          
+          <tr style="font-size:12px;color:#666;border-bottom:1px solid #eee;">
+          <td style="padding:6px;">LP</td>
+          <td style="padding:6px;text-align:right;">Booked</td>
+          <td style="padding:6px;text-align:right;">Floating</td>
+          <td style="padding:6px;text-align:right;">P&L</td>
+          </tr>
+          
+          {lp_rows}
+          
+          </table>
+          ''' if lp_rows else ''}
+          
+          <p style="margin-top:30px;font-size:13px;color:#666;text-align:center;">
+          This is an automated Dealing P&L report from Carlton FX.
+          </p>
+          
+          <p style="text-align:center;font-size:13px;color:#666;">
+          Submitted by: <strong>{user.get('name','Unknown')}</strong>
+          </p>
+          
+          </td>
+          </tr>
+          
+          <!-- Divider -->
+          <tr>
+          <td style="border-top:1px solid #eeeeee"></td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+          <td align="center" style="padding:25px 20px;font-size:12px;color:#888">
+          <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
+          <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+          </td>
+          </tr>
+          
+          </table>
+          
+          </td>
+          </tr>
+          </table>
+          
+          </body>
+          </html>
+          """
     
     # Send email
     try:
@@ -12626,38 +12876,193 @@ async def send_approval_notification(notification_type: str, details: dict):
             return
         
         if notification_type == "transaction":
-            subject = f"CARLTON FX - New Transaction Pending Approval"
-            html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#0B0C10;color:white;border-radius:8px;">
-                <h2 style="color:#66FCF1;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
-                <div style="background:#1F2833;padding:20px;border-radius:8px;margin:15px 0;">
-                    <h3 style="color:#fbbf24;margin:0 0 15px;">New Transaction Pending Approval</h3>
-                    <table style="width:100%;font-size:13px;color:#C5C6C7;">
-                        <tr><td style="padding:4px 0;color:#888;">Reference</td><td style="padding:4px 0;font-family:monospace;">{details.get('reference', '-')}</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Type</td><td style="padding:4px 0;text-transform:capitalize;color:{'#4ade80' if details.get('type') == 'deposit' else '#f87171'}">{details.get('type', '-')}</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Client</td><td style="padding:4px 0;">{details.get('client', '-')}</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Amount</td><td style="padding:4px 0;font-weight:bold;font-size:16px;">${details.get('amount', 0):,.2f} USD</td></tr>
-                        {f'<tr><td style="padding:4px 0;color:#888;">Base Amount</td><td style="padding:4px 0;">{details.get("base_amount", 0):,.2f} {details.get("base_currency", "")}</td></tr>' if details.get('base_currency') and details.get('base_currency') != 'USD' else ''}
-                        <tr><td style="padding:4px 0;color:#888;">Destination</td><td style="padding:4px 0;">{details.get('destination', '-')}</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Created By</td><td style="padding:4px 0;">{details.get('created_by', '-')}</td></tr>
-                    </table>
-                </div>
-                <p style="color:#C5C6C7;text-align:center;font-size:12px;">Please review and approve/reject this transaction in the Back Office.</p></div>"""
-        
+            subject = "CARLTON FX - New Transaction Pending Approval"
+
+            html = f"""
+                  <!doctype html>
+                  <html>
+                  <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+                  
+                  <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
+                  <tr>
+                  <td align="center">
+                  
+                  <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
+                  
+                  <tr>
+                  <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
+                  <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png" width="180" />
+                  </td>
+                  </tr>
+                  
+                  <tr>
+                  <td style="padding:40px 30px;color:#333;font-size:15px;line-height:1.6;">
+                  
+                  <h2 style="margin-top:0;color:#1ea21a;">New Transaction Pending Approval</h2>
+                  
+                  <table width="100%" style="border-collapse:collapse;font-size:14px;margin-top:20px;">
+                  
+                  <tr>
+                  <td style="padding:8px 0;color:#777;">Reference</td>
+                  <td style="padding:8px 0;font-family:monospace;">{details.get('reference','-')}</td>
+                  </tr>
+                  
+                  <tr>
+                  <td style="padding:8px 0;color:#777;">Type</td>
+                  <td style="padding:8px 0;text-transform:capitalize;font-weight:bold;color:{'#16a34a' if details.get('type') == 'deposit' else '#dc2626'};">
+                  {details.get('type','-')}
+                  </td>
+                  </tr>
+                  
+                  <tr>
+                  <td style="padding:8px 0;color:#777;">Client</td>
+                  <td style="padding:8px 0;">{details.get('client','-')}</td>
+                  </tr>
+                  
+                  <tr>
+                  <td style="padding:8px 0;color:#777;">Amount</td>
+                  <td style="padding:8px 0;font-weight:bold;font-size:16px;">
+                  ${details.get('amount',0):,.2f} USD
+                  </td>
+                  </tr>
+                  
+                  {f'''
+                  <tr>
+                  <td style="padding:8px 0;color:#777;">Base Amount</td>
+                  <td style="padding:8px 0;">
+                  {details.get("base_amount",0):,.2f} {details.get("base_currency","")}
+                  </td>
+                  </tr>
+                  ''' if details.get('base_currency') and details.get('base_currency') != 'USD' else ''}
+                  
+                  <tr>
+                  <td style="padding:8px 0;color:#777;">Destination</td>
+                  <td style="padding:8px 0;">{details.get('destination','-')}</td>
+                  </tr>
+                  
+                  <tr>
+                  <td style="padding:8px 0;color:#777;">Created By</td>
+                  <td style="padding:8px 0;">{details.get('created_by','-')}</td>
+                  </tr>
+                  
+                  </table>
+                  
+                  <p style="margin-top:30px;color:#666;font-size:13px;text-align:center;">
+                  Please review and approve or reject this transaction in the Back Office.
+                  </p>
+                  
+                  </td>
+                  </tr>
+                  
+                  <tr>
+                  <td style="border-top:1px solid #eee"></td>
+                  </tr>
+                  
+                  <tr>
+                  <td align="center" style="padding:25px 20px;font-size:12px;color:#888">
+                  <p style="margin:0 0 10px;">© 2026 Carlton FX. All Rights Reserved.</p>
+                  <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+                  </td>
+                  </tr>
+                  
+                  </table>
+                  
+                  </td>
+                  </tr>
+                  </table>
+                  
+                  </body>
+                  </html>
+                  """
         elif notification_type == "settlement":
-            html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#0B0C10;color:white;border-radius:8px;">
-                <h2 style="color:#66FCF1;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
-                <div style="background:#1F2833;padding:20px;border-radius:8px;margin:15px 0;">
-                    <h3 style="color:#fbbf24;margin:0 0 15px;">New Settlement Pending Approval</h3>
-                    <table style="width:100%;font-size:13px;color:#C5C6C7;">
-                        <tr><td style="padding:4px 0;color:#888;">Settlement ID</td><td style="padding:4px 0;font-family:monospace;">{details.get('settlement_id', '-')}</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Exchanger</td><td style="padding:4px 0;">{details.get('vendor_name', '-')}</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Gross Amount</td><td style="padding:4px 0;font-weight:bold;">{details.get('gross_amount', 0):,.2f} {details.get('currency', 'USD')}</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Net Settlement</td><td style="padding:4px 0;font-weight:bold;font-size:16px;color:#66FCF1;">{details.get('net_amount', 0):,.2f} {details.get('dest_currency', 'USD')}</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Transactions</td><td style="padding:4px 0;">{details.get('tx_count', 0)} entries</td></tr>
-                        <tr><td style="padding:4px 0;color:#888;">Created By</td><td style="padding:4px 0;">{details.get('created_by', '-')}</td></tr>
-                    </table>
-                </div>
-                <p style="color:#C5C6C7;text-align:center;font-size:12px;">Please review and approve/reject this settlement in the Back Office.</p></div>"""
+
+            html = f"""
+                   <!doctype html>
+                   <html>
+                   <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+                   
+                   <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
+                   <tr>
+                   <td align="center">
+                   
+                   <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
+                   
+                   <tr>
+                   <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
+                   <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png" width="180"/>
+                   </td>
+                   </tr>
+                   
+                   <tr>
+                   <td style="padding:40px 30px;color:#333;font-size:15px;line-height:1.6;">
+                   
+                   <h2 style="margin-top:0;color:#1ea21a;">New Settlement Pending Approval</h2>
+                   
+                   <table width="100%" style="border-collapse:collapse;font-size:14px;margin-top:20px;">
+                   
+                   <tr>
+                   <td style="padding:8px 0;color:#777;">Settlement ID</td>
+                   <td style="padding:8px 0;font-family:monospace;">{details.get('settlement_id','-')}</td>
+                   </tr>
+                   
+                   <tr>
+                   <td style="padding:8px 0;color:#777;">Exchanger</td>
+                   <td style="padding:8px 0;">{details.get('vendor_name','-')}</td>
+                   </tr>
+                   
+                   <tr>
+                   <td style="padding:8px 0;color:#777;">Gross Amount</td>
+                   <td style="padding:8px 0;font-weight:bold;">
+                   {details.get('gross_amount',0):,.2f} {details.get('currency','USD')}
+                   </td>
+                   </tr>
+                   
+                   <tr>
+                   <td style="padding:8px 0;color:#777;">Net Settlement</td>
+                   <td style="padding:8px 0;font-weight:bold;font-size:16px;color:#1ea21a;">
+                   {details.get('net_amount',0):,.2f} {details.get('dest_currency','USD')}
+                   </td>
+                   </tr>
+                   
+                   <tr>
+                   <td style="padding:8px 0;color:#777;">Transactions</td>
+                   <td style="padding:8px 0;">{details.get('tx_count',0)} entries</td>
+                   </tr>
+                   
+                   <tr>
+                   <td style="padding:8px 0;color:#777;">Created By</td>
+                   <td style="padding:8px 0;">{details.get('created_by','-')}</td>
+                   </tr>
+                   
+                   </table>
+                   
+                   <p style="margin-top:30px;color:#666;font-size:13px;text-align:center;">
+                   Please review and approve or reject this settlement in the Back Office.
+                   </p>
+                   
+                   </td>
+                   </tr>
+                   
+                   <tr>
+                   <td style="border-top:1px solid #eee"></td>
+                   </tr>
+                   
+                   <tr>
+                   <td align="center" style="padding:25px 20px;font-size:12px;color:#888">
+                   <p style="margin:0 0 10px;">© 2026 Carlton FX. All Rights Reserved.</p>
+                   <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+                   </td>
+                   </tr>
+                   
+                   </table>
+                   
+                   </td>
+                   </tr>
+                   </table>
+                   
+                   </body>
+                   </html>
+                   """
             subject = f"CARLTON FX - Settlement Pending Approval ({details.get('vendor_name', '')})"
         else:
             return
@@ -13377,217 +13782,161 @@ async def generate_daily_report_html():
     
     # Generate HTML
     html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            body {{ font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: #f5f5f5; }}
-            .container {{ max-width: 700px; margin: 0 auto; background-color: #0B0C10; color: white; }}
-            .header {{ background: linear-gradient(135deg, #1F2833 0%, #0B0C10 100%); padding: 30px; text-align: center; border-bottom: 3px solid #66FCF1; }}
-            .header h1 {{ color: #66FCF1; margin: 0; font-size: 28px; letter-spacing: 2px; }}
-            .header p {{ color: #C5C6C7; margin: 10px 0 0; font-size: 14px; }}
-            .content {{ padding: 30px; }}
-            .section {{ background-color: #1F2833; border-radius: 8px; padding: 20px; margin-bottom: 20px; }}
-            .section-title {{ color: #66FCF1; font-size: 16px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #66FCF1; padding-bottom: 10px; }}
-            .stat-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }}
-            .stat-box {{ background-color: #0B0C10; border-radius: 6px; padding: 15px; }}
-            .stat-label {{ color: #C5C6C7; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }}
-            .stat-value {{ color: white; font-size: 24px; font-weight: bold; margin-top: 5px; }}
-            .stat-value.green {{ color: #4ade80; }}
-            .stat-value.red {{ color: #f87171; }}
-            .stat-value.cyan {{ color: #66FCF1; }}
-            .stat-value.yellow {{ color: #fbbf24; }}
-            .alert {{ background-color: #7f1d1d; border-left: 4px solid #ef4444; padding: 15px; margin-bottom: 20px; border-radius: 0 8px 8px 0; }}
-            .alert-title {{ color: #fca5a5; font-weight: bold; margin-bottom: 5px; }}
-            .alert-text {{ color: #fecaca; font-size: 14px; }}
-            .footer {{ background-color: #1F2833; padding: 20px; text-align: center; border-top: 1px solid #333; }}
-            .footer p {{ color: #C5C6C7; font-size: 12px; margin: 0; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-            th, td {{ padding: 10px; text-align: left; border-bottom: 1px solid #333; }}
-            th {{ color: #66FCF1; font-size: 11px; text-transform: uppercase; }}
-            td {{ color: white; font-size: 13px; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>CARLTON FX</h1>
-                <p>Daily Business Report - {now.strftime('%B %d, %Y')}</p>
-            </div>
-            
-            <div class="content">
-                <!-- Alerts Section -->
-                {"" if len(pending_txs) == 0 else f'''
-                <div class="alert">
-                    <div class="alert-title">⚠️ Action Required</div>
-                    <div class="alert-text">{len(pending_txs)} transactions pending approval</div>
-                </div>
-                '''}
-                
-                {dealing_pnl_html}
-                
-                <!-- Today's Activity -->
-                <div class="section">
-                    <div class="section-title">📊 Today's Activity</div>
-                    <div class="stat-grid">
-                        <div class="stat-box">
-                            <div class="stat-label">Deposits</div>
-                            <div class="stat-value green">+${today_deposits:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Withdrawals</div>
-                            <div class="stat-value red">-${today_withdrawals:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Net Flow</div>
-                            <div class="stat-value {'green' if today_deposits - today_withdrawals >= 0 else 'red'}">${today_deposits - today_withdrawals:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Transactions</div>
-                            <div class="stat-value cyan">{len(today_txs)}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Treasury Status -->
-                <div class="section">
-                    <div class="section-title">🏦 Treasury Status</div>
-                    <div class="stat-grid">
-                        <div class="stat-box">
-                            <div class="stat-label">Total Balance (USD)</div>
-                            <div class="stat-value cyan">${total_treasury:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Active Accounts</div>
-                            <div class="stat-value">{len(treasury_accounts)}</div>
-                        </div>
-                    </div>
-                    <table>
-                        <tr><th>Account</th><th>Currency</th><th>Balance</th><th>USD Value</th></tr>
-                        {''.join(f"<tr><td>{a.get('account_name', 'N/A')}</td><td>{a.get('currency', 'USD')}</td><td>{a.get('balance', 0):,.2f}</td><td>${convert_to_usd(a.get('balance', 0), a.get('currency', 'USD')):,.2f}</td></tr>" for a in treasury_accounts[:5])}
-                    </table>
-                </div>
-                
-                <!-- PSP Status -->
-                <div class="section">
-                    <div class="section-title">💳 PSP Status</div>
-                    <div class="stat-grid">
-                        <div class="stat-box">
-                            <div class="stat-label">Pending Settlements</div>
-                            <div class="stat-value yellow">${total_psp_pending:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Pending Transactions</div>
-                            <div class="stat-value">{len(psp_pending_txs)}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Outstanding Accounts -->
-                <div class="section">
-                    <div class="section-title">📋 Outstanding Accounts</div>
-                    <div class="stat-grid">
-                        <div class="stat-box">
-                            <div class="stat-label">Receivables (Owed to us)</div>
-                            <div class="stat-value green">${total_receivables:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Payables (We owe)</div>
-                            <div class="stat-value red">${total_payables:,.2f}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Daily Loan Transactions Log -->
-                <div class="section">
-                    <div class="section-title">💰 Daily Loan Transactions</div>
-                    <div class="stat-grid">
-                        <div class="stat-box">
-                            <div class="stat-label">Total Disbursed Today</div>
-                            <div class="stat-value red">-${total_disbursed_today:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Total Repaid Today</div>
-                            <div class="stat-value green">+${total_repaid_today:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Disbursements</div>
-                            <div class="stat-value">{len(today_disbursements)}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Repayments</div>
-                            <div class="stat-value">{len(today_repayments)}</div>
-                        </div>
-                    </div>
-                    {"" if len(today_loan_txs) == 0 else f'''
-                    <table>
-                        <tr><th>Type</th><th>Borrower</th><th>Amount</th><th>Currency</th></tr>
-                        {"".join(f"<tr><td style='color: {'#4ade80' if lt.get('transaction_type') == 'repayment' else '#f87171'}'>{lt.get('transaction_type', 'N/A').upper()}</td><td>{loans_dict.get(lt.get('loan_id'), dict()).get('borrower_name', 'N/A')}</td><td>${lt.get('amount', 0):,.2f}</td><td>{lt.get('currency', 'USD')}</td></tr>" for lt in today_loan_txs[:10])}
-                    </table>
-                    {f"<p style='color: #C5C6C7; font-size: 11px; margin-top: 10px;'>Showing 10 of {len(today_loan_txs)} transactions</p>" if len(today_loan_txs) > 10 else ""}
-                    '''}
-                </div>
-                
-                <!-- Exchangers Summary -->
-                <div class="section">
-                    <div class="section-title">🏪 Exchangers Summary</div>
-                    <div class="stat-grid">
-                        <div class="stat-box">
-                            <div class="stat-label">Settled Today</div>
-                            <div class="stat-value cyan">${total_vendor_settlements_today:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Active Exchangers</div>
-                            <div class="stat-value">{len(vendors)}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">We Owe (Total)</div>
-                            <div class="stat-value red">${total_pending_to_vendors:,.2f}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">They Owe (Total)</div>
-                            <div class="stat-value green">${total_pending_from_vendors:,.2f}</div>
-                        </div>
-                    </div>
-                    {"" if len(vendor_summaries) == 0 else f'''
-                    <table>
-                        <tr><th>Exchanger</th><th>Deposits</th><th>Withdrawals</th><th>Commission</th><th>I&E</th><th>Loans</th><th>Balance</th></tr>
-                        {"".join(f"<tr><td>{v['name']}</td><td style='color: #4ade80'>${v['pending_deposits']:,.0f}</td><td style='color: #f87171'>${v['pending_withdrawals']:,.0f}</td><td>${v['commission']:,.0f}</td><td>${v['ie_balance']:,.0f}</td><td>${v['loan_balance']:,.0f}</td><td style='color: {'#f87171' if v['settlement_balance'] > 0 else '#4ade80' if v['settlement_balance'] < 0 else 'white'}'>${v['settlement_balance']:+,.0f}</td></tr>" for v in vendor_summaries[:10])}
-                    </table>
-                    {f"<p style='color: #C5C6C7; font-size: 11px; margin-top: 10px;'>Showing 10 of {len(vendor_summaries)} exchangers</p>" if len(vendor_summaries) > 10 else ""}
-                    <p style='color: #C5C6C7; font-size: 10px; margin-top: 5px;'>* Positive balance = We owe them | Negative balance = They owe us</p>
-                    '''}
-                </div>
-                
-                <!-- Pending Actions -->
-                <div class="section">
-                    <div class="section-title">⏳ Pending Actions</div>
-                    <div class="stat-grid">
-                        <div class="stat-box">
-                            <div class="stat-label">Pending Approvals</div>
-                            <div class="stat-value yellow">{len(pending_txs)}</div>
-                        </div>
-                        <div class="stat-box">
-                            <div class="stat-label">Active Vendors</div>
-                            <div class="stat-value">{len(vendors)}</div>
-                        </div>
-                    </div>
-                </div>
-                
-                {daily_recon_html}
-                
-            </div>
-            
-            <div class="footer">
-                <p>This is an automated report from CARLTON FX Back Office</p>
-                <p>Generated at {now.strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
+         <!doctype html>
+         <html>
+         <head>
+         <meta charset="UTF-8">
+         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+         <title>Carlton FX</title>
+         </head>
+         
+         <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+         
+         <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
+         <tr>
+         <td align="center">
+         
+         <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
+         
+         <!-- Header -->
+         <tr>
+         <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
+         <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png"
+         width="180" style="display:block;margin-bottom:10px;" />
+         
+         <p style="margin:0;font-size:14px;color:#666;">
+         Daily Business Report - {now.strftime('%B %d, %Y')}
+         </p>
+         </td>
+         </tr>
+         
+         <tr>
+         <td style="padding:40px 30px;color:#333;font-size:14px;line-height:1.6;">
+         
+         <!-- Alerts -->
+         {"" if len(pending_txs) == 0 else f'''
+         <table width="100%" style="margin-bottom:20px;">
+         <tr>
+         <td style="background:#fff4f4;border-left:4px solid #dc2626;padding:12px;border-radius:4px;">
+         <strong style="color:#dc2626;">⚠ Action Required</strong><br>
+         <span style="color:#555;">{len(pending_txs)} transactions pending approval</span>
+         </td>
+         </tr>
+         </table>
+         '''}
+         
+         {dealing_pnl_html}
+         
+         <!-- Today's Activity -->
+         <h3 style="color:#1ea21a;margin-top:30px;">Today's Activity</h3>
+         
+         <table width="100%" cellpadding="8" style="border-collapse:collapse;margin-top:10px;">
+         
+         <tr>
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">Deposits</div>
+         <div style="font-size:18px;font-weight:bold;color:#16a34a;">
+         +${today_deposits:,.2f}
+         </div>
+         </td>
+         
+         <td width="10"></td>
+         
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">Withdrawals</div>
+         <div style="font-size:18px;font-weight:bold;color:#dc2626;">
+         -${today_withdrawals:,.2f}
+         </div>
+         </td>
+         </tr>
+         
+         <tr>
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">Net Flow</div>
+         <div style="font-size:18px;font-weight:bold;color:{' #16a34a ' if today_deposits - today_withdrawals >= 0 else '#dc2626'};">
+         ${today_deposits - today_withdrawals:,.2f}
+         </div>
+         </td>
+         
+         <td></td>
+         
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">Transactions</div>
+         <div style="font-size:18px;font-weight:bold;">
+         {len(today_txs)}
+         </div>
+         </td>
+         </tr>
+         
+         </table>
+         
+         <!-- Treasury -->
+         <h3 style="color:#1ea21a;margin-top:30px;">Treasury Status</h3>
+         
+         <table width="100%" cellpadding="6" style="border-collapse:collapse;margin-top:10px;">
+         <tr style="font-size:12px;color:#666;border-bottom:1px solid #eee;">
+         <td>Account</td>
+         <td>Currency</td>
+         <td align="right">Balance</td>
+         <td align="right">USD Value</td>
+         </tr>
+         
+         {''.join(f"<tr><td>{a.get('account_name','N/A')}</td><td>{a.get('currency','USD')}</td><td align='right'>{a.get('balance',0):,.2f}</td><td align='right'>${convert_to_usd(a.get('balance',0),a.get('currency','USD')):,.2f}</td></tr>" for a in treasury_accounts[:5])}
+         
+         </table>
+         
+         <!-- PSP -->
+         <h3 style="color:#1ea21a;margin-top:30px;">PSP Status</h3>
+         
+         <table width="100%" cellpadding="8" style="border-collapse:collapse;margin-top:10px;">
+         <tr>
+         
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">Pending Settlements</div>
+         <div style="font-size:18px;font-weight:bold;color:#ca8a04;">
+         ${total_psp_pending:,.2f}
+         </div>
+         </td>
+         
+         <td width="10"></td>
+         
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">Pending Transactions</div>
+         <div style="font-size:18px;font-weight:bold;">
+         {len(psp_pending_txs)}
+         </div>
+         </td>
+         
+         </tr>
+         </table>
+         
+         {daily_recon_html}
+         
+         </td>
+         </tr>
+         
+         <!-- Divider -->
+         <tr>
+         <td style="border-top:1px solid #eeeeee"></td>
+         </tr>
+         
+         <!-- Footer -->
+         <tr>
+         <td align="center" style="padding:25px 20px;font-size:12px;color:#888;">
+         <p style="margin:0 0 8px 0;">This is an automated report from Carlton FX Back Office</p>
+         <p style="margin:0;">Generated at {now.strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+         </td>
+         </tr>
+         
+         </table>
+         
+         </td>
+         </tr>
+         </table>
+         
+         </body>
+         </html>
+         """
     return html
 
 async def send_daily_report():
@@ -14550,19 +14899,103 @@ async def send_audit_alert_email(result: dict):
         color = "#ef4444" if score < 60 else "#f59e0b" if score < 80 else "#22c55e"
         
         html = f"""
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#0B0C10;color:#C5C6C7;padding:20px;border-radius:8px;">
-            <h1 style="color:#66FCF1;margin-bottom:4px;">CARLTON FX - Audit Alert</h1>
-            <p style="color:#888;margin-top:0;">{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}</p>
-            <div style="text-align:center;margin:20px 0;">
-                <div style="display:inline-block;width:80px;height:80px;border-radius:50%;border:4px solid {color};line-height:80px;font-size:28px;font-weight:bold;color:{color};">{score}</div>
-                <p style="color:#888;margin-top:8px;">Health Score</p>
-            </div>
-            <table style="width:100%;border-collapse:collapse;margin:16px 0;">
-                <tr><td style="padding:8px;color:#ef4444;">Critical Issues</td><td style="padding:8px;text-align:right;font-weight:bold;">{stats.get('critical', 0)}</td></tr>
-                <tr><td style="padding:8px;color:#f59e0b;">Warnings</td><td style="padding:8px;text-align:right;font-weight:bold;">{stats.get('warning', 0)}</td></tr>
-                <tr><td style="padding:8px;color:#3b82f6;">Info</td><td style="padding:8px;text-align:right;font-weight:bold;">{stats.get('info', 0)}</td></tr>
-            </table>
-        """
+               <!DOCTYPE html>
+               <html>
+               <head>
+               <meta charset="UTF-8">
+               </head>
+               <body style="margin:0;padding:0;background-color:#f5f5f5;font-family:'Segoe UI',Arial,sans-serif;">
+                   
+               <div style="max-width:600px;margin:0 auto;background-color:#0B0C10;color:white;">
+                   
+                   <!-- Header -->
+                   <div style="background:linear-gradient(135deg,#1F2833 0%,#0B0C10 100%);padding:30px;text-align:center;border-bottom:3px solid #66FCF1;">
+                       <h1 style="color:#66FCF1;margin:0;font-size:24px;letter-spacing:2px;">CARLTON FX</h1>
+                       <p style="color:#C5C6C7;margin:10px 0 0;font-size:14px;">Audit Alert Report</p>
+                       <p style="color:#888;margin:5px 0 0;font-size:12px;">
+                           {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
+                       </p>
+                   </div>
+               
+                   <!-- Content -->
+                   <div style="padding:30px;">
+               
+                       <div style="background-color:#1F2833;border-radius:8px;padding:20px;margin-bottom:20px;">
+                           
+                           <h2 style="color:#66FCF1;font-size:16px;margin:0 0 20px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid #66FCF1;padding-bottom:10px;">
+                               ⚠️ System Audit Health
+                           </h2>
+               
+                           <!-- Health Score -->
+                           <div style="text-align:center;background-color:#0B0C10;border-radius:6px;padding:25px;margin-bottom:20px;">
+                               <div style="color:#C5C6C7;font-size:11px;text-transform:uppercase;letter-spacing:1px;">
+                                   HEALTH SCORE
+                               </div>
+               
+                               <div style="margin-top:10px;">
+                                   <div style="display:inline-block;width:90px;height:90px;border-radius:50%;
+                                       border:4px solid {color};
+                                       line-height:90px;
+                                       font-size:32px;
+                                       font-weight:bold;
+                                       color:{color};">
+                                       {score}
+                                   </div>
+                               </div>
+               
+                               <div style="color:#C5C6C7;font-size:12px;margin-top:10px;">
+                                   Overall System Health
+                               </div>
+                           </div>
+               
+                           <!-- Issue Summary -->
+                           <div style="background-color:#0B0C10;border-radius:6px;padding:15px;">
+                               
+                               <h4 style="color:#66FCF1;font-size:12px;margin:0 0 10px;text-transform:uppercase;">
+                                   Issue Summary
+                               </h4>
+               
+                               <table style="width:100%;border-collapse:collapse;">
+                                   <tr>
+                                       <td style="padding:8px;color:#ef4444;font-size:13px;">Critical Issues</td>
+                                       <td style="padding:8px;text-align:right;font-weight:bold;color:white;">
+                                           {stats.get('critical',0)}
+                                       </td>
+                                   </tr>
+               
+                                   <tr>
+                                       <td style="padding:8px;color:#f59e0b;font-size:13px;">Warnings</td>
+                                       <td style="padding:8px;text-align:right;font-weight:bold;color:white;">
+                                           {stats.get('warning',0)}
+                                       </td>
+                                   </tr>
+               
+                                   <tr>
+                                       <td style="padding:8px;color:#3b82f6;font-size:13px;">Info</td>
+                                       <td style="padding:8px;text-align:right;font-weight:bold;color:white;">
+                                           {stats.get('info',0)}
+                                       </td>
+                                   </tr>
+                               </table>
+               
+                           </div>
+               
+                       </div>
+               
+                   </div>
+               
+                   <!-- Footer -->
+                   <div style="background-color:#1F2833;padding:20px;text-align:center;border-top:1px solid #333;">
+                       <p style="color:#C5C6C7;font-size:12px;margin:0;">
+                           This is an automated system audit notification from CARLTON FX
+                       </p>
+                   </div>
+               
+               </div>
+               
+               </body>
+               </html>
+               """
         
         # Add critical findings
         criticals = [f for f in result.get("findings", []) if f.get("severity") == "critical"]
