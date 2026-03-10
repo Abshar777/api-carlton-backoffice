@@ -1264,7 +1264,7 @@ async def login(credentials: UserLogin, request: Request):
                  <tr>
                  <td align="center" style="padding:25px 20px;font-size:12px;color:#888888">
                  <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
-                 <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+                 <p style="margin:0">This email was sent by Carlton FX.</p>
                  </td>
                  </tr>
                  
@@ -1535,7 +1535,7 @@ async def forgot_password(data: dict = Body(...)):
             <tr>
             <td align="center" style="padding:25px 20px;font-size:12px;color:#888888">
             <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
-            <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+            <p style="margin:0">This email was sent by Carlton FX.</p>
             </td>
             </tr>
             
@@ -3136,7 +3136,7 @@ async def send_dealing_pnl_email(date: str, user: dict = Depends(require_permiss
           <tr>
           <td align="center" style="padding:25px 20px;font-size:12px;color:#888">
           <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
-          <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+          <p style="margin:0">This email was sent by Carlton FX.</p>
           </td>
           </tr>
           
@@ -12961,7 +12961,7 @@ async def send_approval_notification(notification_type: str, details: dict):
                   <tr>
                   <td align="center" style="padding:25px 20px;font-size:12px;color:#888">
                   <p style="margin:0 0 10px;">© 2026 Carlton FX. All Rights Reserved.</p>
-                  <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+                  <p style="margin:0">This email was sent by Carlton FX.</p>
                   </td>
                   </tr>
                   
@@ -13050,7 +13050,7 @@ async def send_approval_notification(notification_type: str, details: dict):
                    <tr>
                    <td align="center" style="padding:25px 20px;font-size:12px;color:#888">
                    <p style="margin:0 0 10px;">© 2026 Carlton FX. All Rights Reserved.</p>
-                   <p style="margin:0">This email was sent by Carlton FX Backoffice.</p>
+                   <p style="margin:0">This email was sent by Carlton FX.</p>
                    </td>
                    </tr>
                    
