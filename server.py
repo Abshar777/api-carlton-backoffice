@@ -1128,7 +1128,6 @@ async def login(credentials: UserLogin, request: Request):
     user_agent = request.headers.get("user-agent", "")
     
     if not user:
-        # Log failed login attempt
         await create_log(
             log_type="auth",
             action="login_failed",
@@ -1142,7 +1141,6 @@ async def login(credentials: UserLogin, request: Request):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
     if not verify_password(credentials.password, user.get("password_hash", "")):
-        # Log failed login attempt
         await create_log(
             log_type="auth",
             action="login_failed",
@@ -1176,7 +1174,6 @@ async def login(credentials: UserLogin, request: Request):
             "expires_at": (now_otp + timedelta(minutes=5)).isoformat()
         })
         smtp_settings = await db.app_settings.find_one({"setting_type": "email"}, {"_id": 0})
-        # Fallback to .env SMTP if DB settings not configured
         smtp_host = (smtp_settings or {}).get("smtp_host") or os.environ.get("SMTP_HOST", "smtp.gmail.com")
         smtp_port = (smtp_settings or {}).get("smtp_port") or int(os.environ.get("SMTP_PORT", "587"))
         smtp_email = (smtp_settings or {}).get("smtp_email") or os.environ.get("SMTP_USER", "")
@@ -1185,98 +1182,98 @@ async def login(credentials: UserLogin, request: Request):
         
         if smtp_email and smtp_password:
             try:
-               otp_html = f"""
-                 <!doctype html>
-                 <html>
-                 <head>
-                 <meta charset="UTF-8">
-                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                 <title>Carlton FX</title>
-                 </head>
-                 
-                 <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
-                 
-                 <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
-                 <tr>
-                 <td align="center">
-                 
-                 <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
-                 
-                 <!-- Header -->
-                 <tr>
-                 <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
-                 <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png"
-                 alt="Carlton FX"
-                 width="180"
-                 style="display:block;margin-bottom:10px;" />
-                 </td>
-                 </tr>
-                 
-                 <!-- Body -->
-                 <tr>
-                 <td style="padding:40px 30px;color:#333333;font-size:15px;line-height:1.6;">
-                 
-                 <p style="margin-top:0;">Dear <strong>Client</strong>,</p>
-                 
-                 <p>
-                 We received a request to log in to your
-                 <strong style="color:#1ea21a;">Carlton FX</strong> account.
-                 Please use the verification code below to continue.
-                 </p>
-                 
-                 <!-- OTP Box -->
-                 <table cellpadding="0" cellspacing="0" width="100%" style="margin:30px 0;">
-                 <tr>
-                 <td align="center">
-                 <div style="background:#f4f6f8;padding:20px;border-radius:6px;display:inline-block;">
-                 <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#1ea21a;">
-                 {otp_code}
-                 </span>
-                 </div>
-                 </td>
-                 </tr>
-                 </table>
-                 
-                 <p style="text-align:center;color:#666;font-size:13px;">
-                 This code will expire in <strong>5 minutes</strong>.  
-                 For security reasons, please do not share this code with anyone.
-                 </p>
-                 
-                 <p>
-                 If you did not request this login attempt, please secure your account
-                 or contact our support team immediately.
-                 </p>
-                 
-                 <p>
-                 Best Regards,<br>
-                 <strong style="color:#1ea21a;">Carlton FX Team</strong>
-                 </p>
-                 
-                 </td>
-                 </tr>
-                 
-                 <!-- Divider -->
-                 <tr>
-                 <td style="border-top:1px solid #eeeeee"></td>
-                 </tr>
-                 
-                 <!-- Footer -->
-                 <tr>
-                 <td align="center" style="padding:25px 20px;font-size:12px;color:#888888">
-                 <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
-                 <p style="margin:0">This email was sent by Carlton FX.</p>
-                 </td>
-                 </tr>
-                 
-                 </table>
-                 
-                 </td>
-                 </tr>
-                 </table>
-                 
-                 </body>
-                 </html>
-                 """
+                otp_html = f"""
+                <!doctype html>
+                <html>
+                <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Carlton FX</title>
+                </head>
+                
+                <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+                
+                <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
+                <tr>
+                <td align="center">
+                
+                <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
+                
+                <!-- Header -->
+                <tr>
+                <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
+                <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png"
+                alt="Carlton FX"
+                width="180"
+                style="display:block;margin-bottom:10px;" />
+                </td>
+                </tr>
+                
+                <!-- Body -->
+                <tr>
+                <td style="padding:40px 30px;color:#333333;font-size:15px;line-height:1.6;">
+                
+                <p style="margin-top:0;">Dear <strong>Client</strong>,</p>
+                
+                <p>
+                We received a request to log in to your
+                <strong style="color:#1ea21a;">Carlton FX</strong> account.
+                Please use the verification code below to continue.
+                </p>
+                
+                <!-- OTP Box -->
+                <table cellpadding="0" cellspacing="0" width="100%" style="margin:30px 0;">
+                <tr>
+                <td align="center">
+                <div style="background:#f4f6f8;padding:20px;border-radius:6px;display:inline-block;">
+                <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#1ea21a;">
+                {otp_code}
+                </span>
+                </div>
+                </td>
+                </tr>
+                </table>
+                
+                <p style="text-align:center;color:#666;font-size:13px;">
+                This code will expire in <strong>5 minutes</strong>.  
+                For security reasons, please do not share this code with anyone.
+                </p>
+                
+                <p>
+                If you did not request this login attempt, please secure your account
+                or contact our support team immediately.
+                </p>
+                
+                <p>
+                Best Regards,<br>
+                <strong style="color:#1ea21a;">Carlton FX Team</strong>
+                </p>
+                
+                </td>
+                </tr>
+                
+                <!-- Divider -->
+                <tr>
+                <td style="border-top:1px solid #eeeeee"></td>
+                </tr>
+                
+                <!-- Footer -->
+                <tr>
+                <td align="center" style="padding:25px 20px;font-size:12px;color:#888888">
+                <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
+                <p style="margin:0">This email was sent by Carlton FX.</p>
+                </td>
+                </tr>
+                
+                </table>
+                
+                </td>
+                </tr>
+                </table>
+                
+                </body>
+                </html>
+                """
                 await send_email(
                     to_emails=[user["email"]], subject="CARLTON FX - Login Verification Code",
                     html_content=otp_html, smtp_host=smtp_host,
@@ -1284,9 +1281,18 @@ async def login(credentials: UserLogin, request: Request):
                     smtp_password=smtp_password,
                     smtp_from_email=smtp_from
                 )
-                return {"access_token": "", "token_type": "bearer", "requires_2fa": True,
+                return {
+                    "access_token": "",
+                    "token_type": "bearer",
+                    "requires_2fa": True,
                     "message": f"Verification code sent to {user['email']}",
-                    "user": {"user_id": user["user_id"], "email": user["email"], "name": user["name"], "role": user.get("role", "viewer")}}
+                    "user": {
+                        "user_id": user["user_id"],
+                        "email": user["email"],
+                        "name": user["name"],
+                        "role": user.get("role", "viewer")
+                    }
+                }
             except Exception as e:
                 logger.error(f"Failed to send OTP email: {e}")
     
@@ -1316,7 +1322,6 @@ async def login(credentials: UserLogin, request: Request):
             "role": user["role"]
         }
     )
-
 
 @api_router.post("/auth/verify-otp")
 async def verify_otp(request: Request, data: dict = Body(...)):
@@ -1431,7 +1436,6 @@ async def forgot_password(data: dict = Body(...)):
     
     user = await db.users.find_one({"email": email}, {"_id": 0})
     if not user:
-        # Don't reveal if user exists
         return {"message": "If an account exists with this email, a reset code has been sent."}
     
     import random
@@ -1446,7 +1450,6 @@ async def forgot_password(data: dict = Body(...)):
         "expires_at": (now + timedelta(minutes=10)).isoformat()
     })
     
-    # Send reset email
     smtp_settings = await db.app_settings.find_one({"setting_type": "email"}, {"_id": 0})
     smtp_host = (smtp_settings or {}).get("smtp_host") or os.environ.get("SMTP_HOST", "smtp.gmail.com")
     smtp_port = (smtp_settings or {}).get("smtp_port") or int(os.environ.get("SMTP_PORT", "587"))
@@ -1456,98 +1459,98 @@ async def forgot_password(data: dict = Body(...)):
     
     if smtp_email and smtp_password:
         try:
-           reset_html = f"""
-            <!doctype html>
-            <html>
-            <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Carlton FX</title>
-            </head>
-            
-            <body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
-            
-            <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
-            <tr>
-            <td align="center">
-            
-            <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
-            
-            <!-- Header -->
-            <tr>
-            <td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
-            <img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png"
-            alt="Carlton FX"
-            width="180"
-            style="display:block;margin-bottom:10px;" />
-            </td>
-            </tr>
-            
-            <!-- Body -->
-            <tr>
-            <td style="padding:40px 30px;color:#333333;font-size:15px;line-height:1.6;">
-            
-            <p style="margin-top:0;">Dear <strong>Client</strong>,</p>
-            
-            <p>
-            We received a request to reset the password for your
-            <strong style="color:#1ea21a;">Carlton FX</strong> account.
-            Please use the verification code below to continue with resetting your password.
-            </p>
-            
-            <!-- OTP Box -->
-            <table cellpadding="0" cellspacing="0" width="100%" style="margin:30px 0;">
-            <tr>
-            <td align="center">
-            <div style="background:#f4f6f8;padding:20px;border-radius:6px;display:inline-block;">
-            <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#1ea21a;">
-            {otp_code}
-            </span>
-            </div>
-            </td>
-            </tr>
-            </table>
-            
-            <p style="text-align:center;color:#666;font-size:13px;">
-            This code will expire in <strong>10 minutes</strong>.
-            If you did not request a password reset, please ignore this email.
-            </p>
-            
-            <p>
-            For security reasons, never share your verification code with anyone.
-            If you need assistance, our support team is always available.
-            </p>
-            
-            <p>
-            Best Regards,<br>
-            <strong style="color:#1ea21a;">Carlton FX Team</strong>
-            </p>
-            
-            </td>
-            </tr>
-            
-            <!-- Divider -->
-            <tr>
-            <td style="border-top:1px solid #eeeeee"></td>
-            </tr>
-            
-            <!-- Footer -->
-            <tr>
-            <td align="center" style="padding:25px 20px;font-size:12px;color:#888888">
-            <p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
-            <p style="margin:0">This email was sent by Carlton FX.</p>
-            </td>
-            </tr>
-            
-            </table>
-            
-            </td>
-            </tr>
-            </table>
-            
-            </body>
-            </html>
-            """
+            reset_html = f"""
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carlton FX</title>
+</head>
+
+<body style="margin:0;padding:0;background-color:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
+<tr>
+<td align="center">
+
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;margin:40px 0;border-radius:8px;overflow:hidden;">
+
+<!-- Header -->
+<tr>
+<td align="center" style="background:white;padding:30px 20px;border-bottom:1px dashed black;">
+<img src="http://my.carltonfx.net/static-files/150/carlton-logoo-01%20(1).png"
+alt="Carlton FX"
+width="180"
+style="display:block;margin-bottom:10px;" />
+</td>
+</tr>
+
+<!-- Body -->
+<tr>
+<td style="padding:40px 30px;color:#333333;font-size:15px;line-height:1.6;">
+
+<p style="margin-top:0;">Dear <strong>Client</strong>,</p>
+
+<p>
+We received a request to reset the password for your
+<strong style="color:#1ea21a;">Carlton FX</strong> account.
+Please use the verification code below to continue with resetting your password.
+</p>
+
+<!-- OTP Box -->
+<table cellpadding="0" cellspacing="0" width="100%" style="margin:30px 0;">
+<tr>
+<td align="center">
+<div style="background:#f4f6f8;padding:20px;border-radius:6px;display:inline-block;">
+<span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#1ea21a;">
+{otp_code}
+</span>
+</div>
+</td>
+</tr>
+</table>
+
+<p style="text-align:center;color:#666;font-size:13px;">
+This code will expire in <strong>10 minutes</strong>.
+If you did not request a password reset, please ignore this email.
+</p>
+
+<p>
+For security reasons, never share your verification code with anyone.
+If you need assistance, our support team is always available.
+</p>
+
+<p>
+Best Regards,<br>
+<strong style="color:#1ea21a;">Carlton FX Team</strong>
+</p>
+
+</td>
+</tr>
+
+<!-- Divider -->
+<tr>
+<td style="border-top:1px solid #eeeeee"></td>
+</tr>
+
+<!-- Footer -->
+<tr>
+<td align="center" style="padding:25px 20px;font-size:12px;color:#888888">
+<p style="margin:0 0 10px 0">© 2026 Carlton FX. All Rights Reserved.</p>
+<p style="margin:0">This email was sent by Carlton FX.</p>
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+"""
             await send_email(
                 to_emails=[email], subject="CARLTON FX - Password Reset Code",
                 html_content=reset_html, smtp_host=smtp_host, smtp_port=smtp_port,
@@ -1557,7 +1560,6 @@ async def forgot_password(data: dict = Body(...)):
             logger.error(f"Failed to send reset email: {e}")
     
     return {"message": "If an account exists with this email, a reset code has been sent."}
-
 
 @api_router.post("/auth/reset-password")
 async def reset_password(data: dict = Body(...)):
