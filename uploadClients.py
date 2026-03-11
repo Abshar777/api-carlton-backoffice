@@ -1,9 +1,9 @@
 """
-Carlton Client List → MongoDB clients import script
-Excel columns: CRM CUSTOMER ID, full_name, email, phone, country
+Update client names in MongoDB by matching on email.
+Reads full_name from Excel and updates the `name` field in the clients collection.
 
 Usage:
-    python import_clients.py --file CARLTON_CLIENT_LIST.xlsx
+    python update_client_names.py --file CARLTON_CLIENT_LIST__1_.xlsx
 
 Requirements:
     pip install motor pandas openpyxl python-dotenv
@@ -11,7 +11,6 @@ Requirements:
 
 import asyncio
 import argparse
-import uuid
 import os
 from datetime import datetime, timezone
 
@@ -22,34 +21,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-def parse_row(row: pd.Series) -> dict:
-    """Convert a DataFrame row into a clients collection document."""
-    client_id = f"client_{uuid.uuid4().hex[:12]}"
-    now = datetime.now(timezone.utc).isoformat()
-
-    def clean(val):
-        return None if pd.isna(val) else str(val).strip()
-
-    return {
-        "client_id":       client_id,
-        "crm_customer_id": clean(row.get("CRM CUSTOMER ID")),
-        "name":            clean(row.get("full_name")),
-        "email":           clean(row.get("email")),
-        "phone":           clean(row.get("phone")),
-        "country":         clean(row.get("country")),
-        "kyc_status":      "pending",
-        "kyc_documents":   [],
-        "created_at":      now,
-        "updated_at":      now,
-    }
-
-
-async def import_clients(file_path: str, mongo_url: str, db_name: str):
+async def update_names(file_path: str, mongo_url: str, db_name: str):
     df = pd.read_excel(file_path, dtype=str)
     df.columns = df.columns.str.strip()
 
-    print(f"📄  Loaded {len(df):,} rows from '{file_path}'")
-    print(f"    Columns: {list(df.columns)}\n")
+    print(f"📄  Loaded {len(df):,} rows from '{file_path}'\n")
 
     mongo = AsyncIOMotorClient(
         mongo_url,
@@ -58,46 +34,58 @@ async def import_clients(file_path: str, mongo_url: str, db_name: str):
     )
     collection = mongo[db_name]["clients"]
 
-    inserted = skipped = errors = 0
+    updated = skipped = not_found = errors = 0
 
     for idx, row in df.iterrows():
-        doc = parse_row(row)
-        email = doc.get("email")
+        email     = str(row.get("email", "")).strip()
+        full_name = str(row.get("full_name", "")).strip()
 
-        if not email:
+        if not email or email == "nan":
             print(f"  ⚠️  Row {idx + 2}: missing email — skipped")
             skipped += 1
             continue
 
-        existing = await collection.find_one({"email": email}, {"_id": 0})
-        if existing:
-            print(f"  ⏭️  Row {idx + 2}: '{email}' already exists — skipped")
+        if not full_name or full_name == "nan":
+            print(f"  ⚠️  Row {idx + 2}: missing full_name for '{email}' — skipped")
             skipped += 1
             continue
 
         try:
-            await collection.insert_one(doc)
-            print(f"  ✅  Row {idx + 2}: inserted '{email}'")
-            inserted += 1
+            result = await collection.update_one(
+                {"email": email},
+                {"$set": {
+                    "name":       full_name,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+
+            if result.matched_count == 0:
+                print(f"  🔍  Row {idx + 2}: '{email}' not found in DB — skipped")
+                not_found += 1
+            else:
+                print(f"  ✅  Row {idx + 2}: updated '{email}' → '{full_name}'")
+                updated += 1
+
         except Exception as e:
-            print(f"  ❌  Row {idx + 2}: error inserting '{email}' — {e}")
+            print(f"  ❌  Row {idx + 2}: error updating '{email}' — {e}")
             errors += 1
 
     mongo.close()
 
     print(f"\n── Summary ──────────────────────────")
     print(f"  Total rows : {len(df):>6,}")
-    print(f"  Inserted   : {inserted:>6,}")
+    print(f"  Updated    : {updated:>6,}")
+    print(f"  Not found  : {not_found:>6,}")
     print(f"  Skipped    : {skipped:>6,}")
     print(f"  Errors     : {errors:>6,}")
     print(f"─────────────────────────────────────")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Import Carlton client list into MongoDB")
+    parser = argparse.ArgumentParser(description="Update client names in MongoDB from Excel")
     parser.add_argument("--file",  default="sheets.xlsx", help="Path to Excel file")
-    parser.add_argument("--mongo", default=os.getenv("MONGO_URL"),     help="MongoDB connection URL")
-    parser.add_argument("--db",    default=os.getenv("DB_NAME"),       help="Database name")
+    parser.add_argument("--mongo", default=os.getenv("MONGO_URL"),         help="MongoDB connection URL")
+    parser.add_argument("--db",    default=os.getenv("DB_NAME"),           help="Database name")
     args = parser.parse_args()
 
     if not args.mongo:
@@ -105,4 +93,4 @@ if __name__ == "__main__":
     if not args.db:
         raise SystemExit("❌  DB_NAME not set. Pass --db or add it to your .env file.")
 
-    asyncio.run(import_clients(args.file, args.mongo, args.db))
+    asyncio.run(update_names(args.file, args.mongo, args.db))
