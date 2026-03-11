@@ -1,6 +1,9 @@
 """
-Update client names in MongoDB by matching on email.
-Reads full_name from Excel and updates the `name` field in the clients collection.
+Update client first_name / last_name in MongoDB by matching on email.
+Splits full_name on the first space:
+  "John Doe"       → first_name="John",  last_name="Doe"
+  "John"           → first_name="John",  last_name=None
+  "John Doe Smith" → first_name="John",  last_name="Doe Smith"
 
 Usage:
     python update_client_names.py --file CARLTON_CLIENT_LIST__1_.xlsx
@@ -19,6 +22,13 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+def split_name(full_name: str) -> tuple[str, str | None]:
+    parts = full_name.strip().split(" ", 1)
+    first = parts[0] if parts else None
+    last  = parts[1] if len(parts) > 1 else None
+    return first, last
 
 
 async def update_names(file_path: str, mongo_url: str, db_name: str):
@@ -50,20 +60,25 @@ async def update_names(file_path: str, mongo_url: str, db_name: str):
             skipped += 1
             continue
 
+        first_name, last_name = split_name(full_name)
+
+        update_fields = {
+            "first_name": first_name,
+            "last_name":  last_name,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
         try:
             result = await collection.update_one(
                 {"email": email},
-                {"$set": {
-                    "name":       full_name,
-                    "updated_at": datetime.now(timezone.utc).isoformat()
-                }}
+                {"$set": update_fields}
             )
 
             if result.matched_count == 0:
                 print(f"  🔍  Row {idx + 2}: '{email}' not found in DB — skipped")
                 not_found += 1
             else:
-                print(f"  ✅  Row {idx + 2}: updated '{email}' → '{full_name}'")
+                print(f"  ✅  Row {idx + 2}: '{email}' → first='{first_name}' last='{last_name}'")
                 updated += 1
 
         except Exception as e:
@@ -82,7 +97,7 @@ async def update_names(file_path: str, mongo_url: str, db_name: str):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Update client names in MongoDB from Excel")
+    parser = argparse.ArgumentParser(description="Update client first/last name in MongoDB from Excel")
     parser.add_argument("--file",  default="sheets.xlsx", help="Path to Excel file")
     parser.add_argument("--mongo", default=os.getenv("MONGO_URL"),         help="MongoDB connection URL")
     parser.add_argument("--db",    default=os.getenv("DB_NAME"),           help="Database name")
