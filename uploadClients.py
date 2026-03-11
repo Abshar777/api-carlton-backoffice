@@ -95,7 +95,7 @@ async def import_clients(file_path: str, mongo_url: str, db_name: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Import Carlton client list into MongoDB")
-    parser.add_argument("--file",  default="CARLTON_CLIENT_LIST.xlsx", help="Path to Excel file")
+    parser.add_argument("--file",  default="sheets.xlsx", help="Path to Excel file")
     parser.add_argument("--mongo", default=os.getenv("MONGO_URL"),     help="MongoDB connection URL")
     parser.add_argument("--db",    default=os.getenv("DB_NAME"),       help="Database name")
     args = parser.parse_args()
