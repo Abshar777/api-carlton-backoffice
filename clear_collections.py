@@ -198,7 +198,7 @@ async def delete_by_crm_reference_id(crm_reference_id, collection_name="transact
 
     # First, preview matching documents
     matches = list(collection.find(query))
-    doc= await db.transactions.find(query)
+    doc= await db.transactions.findOne(query)
     print(doc)
     if not matches:
         print(f"\n❌ No documents found with crm_reference_id = {crm_reference_id}")
