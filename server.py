@@ -2378,6 +2378,7 @@ async def get_treasury_history(
     
     # Calculate running balance (start from current balance, work backwards)
     current_balance = account.get("balance", 0)
+    print(account.get("balance"),"balance🔴")
     running = current_balance
     for tx in treasury_txs:
         tx["running_balance"] = round(running, 2)
