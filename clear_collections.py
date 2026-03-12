@@ -191,8 +191,8 @@ def delete_by_crm_reference_id(crm_reference_id, collection_name="transaction_re
     # Try both int and string versions to be safe
     query = {
         "$or": [
-            {"crm_reference_id": crm_reference_id},
-            {"crm_reference_id": str(crm_reference_id)}
+            {"crm_reference": crm_reference_id},
+            {"crm_reference": str(crm_reference_id)}
         ]
     }
 
