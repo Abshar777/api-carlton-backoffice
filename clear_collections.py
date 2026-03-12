@@ -17,6 +17,7 @@ DB_NAME = os.environ["DB_NAME"]
 
 COLLECTIONS_TO_CLEAR = [
     "transaction_requests"
+    "transactions"
 
 ]
 
@@ -138,9 +139,9 @@ def main():
     client.close()
 
 
-# if __name__ == "__main__":
-#     main()
-#     # clear_all_collections()
+if __name__ == "__main__":
+    main()
+    # clear_all_collections()
 
 
 
@@ -227,9 +228,9 @@ async def delete_by_crm_reference_id(crm_reference_id, collection_name="transact
 # delete_by_crm_reference_id(5809117)
 
 
-client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
-db = client[DB_NAME]
-# collection = db["transactions"]
-result = db.transaction_requests.delete_many({"request_id": "txreq_e60a8b45c4bd"})
-print(f"Deleted {result.deleted_count} document(s)")
+# client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+# db = client[DB_NAME]
+# # collection = db["transactions"]
+# result = db.transaction_requests.delete_many({"request_id": "txreq_e60a8b45c4bd"})
+# print(f"Deleted {result.deleted_count} document(s)")
 
