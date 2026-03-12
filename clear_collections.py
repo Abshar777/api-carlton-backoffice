@@ -50,9 +50,9 @@ def main():
     client.close()
 
 
-# if __name__ == "__main__":
-#     main()
-#     # clear_all_collections()
+if __name__ == "__main__":
+    main()
+    # clear_all_collections()
 
 
 
@@ -139,9 +139,9 @@ def main():
     client.close()
 
 
-if __name__ == "__main__":
-    main()
-    # clear_all_collections()
+# if __name__ == "__main__":
+#     main()
+#     # clear_all_collections()
 
 
 
