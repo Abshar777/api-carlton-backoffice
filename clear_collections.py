@@ -198,7 +198,7 @@ async def delete_by_crm_reference_id(crm_reference_id, collection_name="transact
 
     # First, preview matching documents
     matches = list(collection.find(query))
-    doc= await db.transactions.findOne(query)
+    doc= await db.transactions.find_one(query)
     print(doc)
     if not matches:
         print(f"\n❌ No documents found with crm_reference_id = {crm_reference_id}")
@@ -224,4 +224,12 @@ async def delete_by_crm_reference_id(crm_reference_id, collection_name="transact
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────
-delete_by_crm_reference_id(5809117)
+# delete_by_crm_reference_id(5809117)
+
+
+client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+db = client[DB_NAME]
+collection = db[collection_name]
+result = db.transaction.delete_many({"$or": [{"crm_reference": 5809117}, {"crm_reference": "5809117"}]})
+print(f"Deleted {result.deleted_count} document(s)")
+
