@@ -229,7 +229,7 @@ async def delete_by_crm_reference_id(crm_reference_id, collection_name="transact
 
 client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
 db = client[DB_NAME]
-collection = db["transactions"]
-result = db.transactions.delete_many({"transaction_id": "tx_c49114437292"})
+# collection = db["transactions"]
+result = db.transaction_requests.delete_many({request_id: "txreq_e60a8b45c4bd"})
 print(f"Deleted {result.deleted_count} document(s)")
 
