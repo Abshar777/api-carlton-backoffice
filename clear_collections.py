@@ -17,7 +17,8 @@ DB_NAME = os.environ["DB_NAME"]
 
 COLLECTIONS_TO_CLEAR = [
     "transaction_requests",
-    "transactions"
+    "transactions",
+    "treasury_transactions"
 
 ]
 
