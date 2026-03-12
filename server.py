@@ -2285,6 +2285,7 @@ async def update_treasury_account(request: Request, account_id: str, update_data
 
     return await db.treasury_accounts.find_one({"account_id": account_id}, {"_id": 0})
 
+
 # Treasury Transaction History
 @api_router.get("/treasury/{account_id}/history")
 async def get_treasury_history(
@@ -2372,27 +2373,16 @@ async def get_treasury_history(
                 "created_by_name": tx.get("processed_by_name")
             })
     
-    # Sort combined list by date
+    # Sort combined list by date (newest first)
     treasury_txs.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    # Calculate running balance (start from current balance, work backwards)
     current_balance = account.get("balance", 0)
     running = current_balance
     for tx in treasury_txs:
         tx["running_balance"] = round(running, 2)
         running -= (tx.get("amount", 0))
     
-    # Paginate the combined result
-    total = len(treasury_txs)
-    total_pages = (total + page_size - 1) // page_size if total > 0 else 1
-    skip = (page - 1) * page_size
-    paginated = treasury_txs[skip:skip + page_size]
-    
-    return {
-        "items": paginated,
-        "total": total,
-        "page": page,
-        "page_size": page_size,
-        "total_pages": total_pages
-    }
     # Paginate the combined result
     total = len(treasury_txs)
     total_pages = (total + page_size - 1) // page_size if total > 0 else 1
