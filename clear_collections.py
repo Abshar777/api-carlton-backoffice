@@ -176,13 +176,13 @@ def clear_all_collections():
     client.close()
 
 
-def delete_by_crm_reference_id(crm_reference_id, collection_name="transaction_requests"):
+def delete_by_crm_reference_id(crm_reference_id, collection_name="transaction"):
     """
     Delete transaction(s) from a collection by crm_reference_id.
     
     Args:
-        crm_reference_id: The CRM reference ID to search for (e.g. 5809117)
-        collection_name: The collection to delete from (default: transaction_requests)
+        crm_reference: The CRM reference ID to search for (e.g. 5809117)
+        collection_name: The collection to delete from (default: transaction)
     """
     client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
     db = client[DB_NAME]
