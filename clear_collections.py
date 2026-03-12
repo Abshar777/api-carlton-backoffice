@@ -16,7 +16,7 @@ MONGO_URL = os.environ["MONGO_URL"]
 DB_NAME = os.environ["DB_NAME"]
 
 COLLECTIONS_TO_CLEAR = [
-    "transaction_requests"
+    "transaction_requests",
     "transactions"
 
 ]
