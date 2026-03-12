@@ -176,7 +176,7 @@ def clear_all_collections():
     client.close()
 
 
-def delete_by_crm_reference_id(crm_reference_id, collection_name="transaction"):
+async def delete_by_crm_reference_id(crm_reference_id, collection_name="transaction"):
     """
     Delete transaction(s) from a collection by crm_reference_id.
     
@@ -198,7 +198,8 @@ def delete_by_crm_reference_id(crm_reference_id, collection_name="transaction"):
 
     # First, preview matching documents
     matches = list(collection.find(query))
-
+    doc= await db.transactions.find(query)
+    print(doc)
     if not matches:
         print(f"\n❌ No documents found with crm_reference_id = {crm_reference_id}")
         client.close()
