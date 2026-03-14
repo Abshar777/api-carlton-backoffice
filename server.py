@@ -7737,6 +7737,7 @@ async def reject_transaction(request: Request, transaction_id: str, reason: str 
 
 # ============== TRANSACTION REQUESTS ==============
 
+
 @api_router.get("/transaction-requests")
 async def get_transaction_requests(
     status: Optional[str] = None,
@@ -7746,11 +7747,19 @@ async def get_transaction_requests(
     date_to: Optional[str] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
-    user: dict = Depends(require_permission(Modules.TRANSACTION_REQUESTS, Actions.VIEW))
+    user: dict = Depends(
+        require_permission(Modules.TRANSACTION_REQUESTS, Actions.VIEW)
+    ),
 ):
     query = {}
+    # Handle approved/rejected as transaction_status filters
+    tx_status_filter = None
     if status and status != "all":
-        query["status"] = status
+        if status in ("approved", "rejected"):
+            query["status"] = "processed"
+            tx_status_filter = status
+        else:
+            query["status"] = status
     if transaction_type and transaction_type != "all":
         query["transaction_type"] = transaction_type
     if search:
@@ -7767,7 +7776,34 @@ async def get_transaction_requests(
         if date_to:
             date_q["$lte"] = date_to + "T23:59:59"
         query["created_at"] = date_q
-    return await paginate_query(db.transaction_requests, query, page, page_size)
+    result = await paginate_query(db.transaction_requests, query, page, page_size)
+
+    # Enrich processed requests with their transaction's approval status
+    tx_ids = [
+        r["transaction_id"] for r in result.get("items", []) if r.get("transaction_id")
+    ]
+    if tx_ids:
+        txs = await db.transactions.find(
+            {"transaction_id": {"$in": tx_ids}},
+            {"_id": 0, "transaction_id": 1, "status": 1},
+        ).to_list(len(tx_ids))
+        tx_status_map = {tx["transaction_id"]: tx["status"] for tx in txs}
+        for req in result.get("items", []):
+            if req.get("transaction_id"):
+                req["transaction_status"] = tx_status_map.get(req["transaction_id"])
+
+    # Filter by transaction status if requested
+    if tx_status_filter:
+        result["items"] = [
+            r
+            for r in result.get("items", [])
+            if r.get("transaction_status") == tx_status_filter
+        ]
+        result["total"] = len(result["items"])
+
+    return result
+
+
 
 @api_router.get("/transaction-requests/{request_id}")
 async def get_transaction_request(request_id: str, user: dict = Depends(require_permission(Modules.TRANSACTION_REQUESTS, Actions.VIEW))):
