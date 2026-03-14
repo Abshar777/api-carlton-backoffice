@@ -11811,16 +11811,17 @@ async def get_treasury_summary_report(
         "recent_transfers": transfers
     }
 
+
 @api_router.get("/reports/psp-summary")
 async def get_psp_summary_report(
     user: dict = Depends(require_permission(Modules.REPORTS, Actions.VIEW)),
     start_date: Optional[str] = None,
-    end_date: Optional[str] = None
+    end_date: Optional[str] = None,
 ):
     """PSP transaction and settlement summary"""
     # Get all PSPs
     psps = await db.psps.find({}, {"_id": 0}).to_list(1000)
-    
+
     # Build query for transactions
     query = {"destination_type": "psp"}
     if start_date:
@@ -11830,50 +11831,80 @@ async def get_psp_summary_report(
             query["created_at"]["$lte"] = end_date
         else:
             query["created_at"] = {"$lte": end_date}
-    
+
     # Aggregate by PSP
     pipeline = [
         {"$match": query},
-        {"$group": {
-            "_id": "$psp_id",
-            "total_volume": {"$sum": "$amount"},
-            "total_commission": {"$sum": {"$ifNull": ["$psp_commission_amount", 0]}},
-            "total_net": {"$sum": {"$ifNull": ["$psp_net_amount", "$amount"]}},
-            "settled_count": {"$sum": {"$cond": [{"$eq": ["$settled", True]}, 1, 0]}},
-            "pending_count": {"$sum": {"$cond": [{"$ne": ["$settled", True]}, 1, 0]}},
-            "transaction_count": {"$sum": 1}
-        }}
+        {
+            "$group": {
+                "_id": "$psp_id",
+                "total_volume": {"$sum": "$amount"},
+                "total_commission": {
+                    "$sum": {"$ifNull": ["$psp_commission_amount", 0]}
+                },
+                "total_extra_charges": {"$sum": {"$ifNull": ["$psp_extra_charges", 0]}},
+                "total_reserve": {"$sum": {"$ifNull": ["$psp_reserve_fund_amount", 0]}},
+                "total_net": {"$sum": {"$ifNull": ["$psp_net_amount", "$amount"]}},
+                "total_base_amount": {"$sum": {"$ifNull": ["$base_amount", 0]}},
+                "base_currencies": {"$addToSet": "$base_currency"},
+                "settled_count": {
+                    "$sum": {"$cond": [{"$eq": ["$settled", True]}, 1, 0]}
+                },
+                "pending_count": {
+                    "$sum": {"$cond": [{"$ne": ["$settled", True]}, 1, 0]}
+                },
+                "transaction_count": {"$sum": 1},
+            }
+        },
     ]
-    
+
     psp_stats = await db.transactions.aggregate(pipeline).to_list(100)
     psp_map = {p["psp_id"]: p for p in psps}
-    
+
     results = []
     for stat in psp_stats:
         psp_id = stat["_id"]
         psp_info = psp_map.get(psp_id, {})
-        
-        results.append({
-            "psp_id": psp_id,
-            "psp_name": psp_info.get("psp_name", "Unknown"),
-            "commission_rate": psp_info.get("commission_rate", 0),
-            "total_volume": stat["total_volume"],
-            "total_commission": stat["total_commission"],
-            "total_net": stat["total_net"],
-            "settled_count": stat["settled_count"],
-            "pending_count": stat["pending_count"],
-            "transaction_count": stat["transaction_count"]
-        })
-    
+
+        # Determine primary payment currency (exclude USD and None)
+        base_currencies = [
+            c for c in stat.get("base_currencies", []) if c and c != "USD"
+        ]
+        pay_currency = (
+            base_currencies[0]
+            if len(base_currencies) == 1
+            else (", ".join(base_currencies) if base_currencies else None)
+        )
+        total_base = stat.get("total_base_amount", 0) if base_currencies else None
+
+        results.append(
+            {
+                "psp_id": psp_id,
+                "psp_name": psp_info.get("psp_name", "Unknown"),
+                "commission_rate": psp_info.get("commission_rate", 0),
+                "total_volume": stat["total_volume"],
+                "total_commission": stat["total_commission"],
+                "total_extra_charges": stat.get("total_extra_charges", 0),
+                "total_reserve": stat.get("total_reserve", 0),
+                "total_net": stat["total_net"],
+                "payment_currency": pay_currency,
+                "total_base_volume": round(total_base, 2) if total_base else None,
+                "settled_count": stat["settled_count"],
+                "pending_count": stat["pending_count"],
+                "transaction_count": stat["transaction_count"],
+            }
+        )
+
     return {
         "psps": results,
         "grand_totals": {
             "total_volume": sum(r["total_volume"] for r in results),
             "total_commission": sum(r["total_commission"] for r in results),
             "total_net": sum(r["total_net"] for r in results),
-            "total_transactions": sum(r["transaction_count"] for r in results)
-        }
+            "total_transactions": sum(r["transaction_count"] for r in results),
+        },
     }
+
 
 @api_router.get("/reports/financial-summary")
 async def get_financial_summary_report(
