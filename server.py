@@ -900,6 +900,12 @@ class TransactionUpdate(BaseModel):
     status: Optional[str] = None
     description: Optional[str] = None
     rejection_reason: Optional[str] = None
+    crm_reference: Optional[str] = None
+    amount: Optional[float] = None
+    base_amount: Optional[float] = None
+    base_currency: Optional[str] = None
+    exchange_rate: Optional[float] = None
+    reference: Optional[str] = None
 
 # ============== HELPER FUNCTIONS ==============
 
@@ -6706,13 +6712,13 @@ async def get_transactions(
     date_to: Optional[str] = None,
     page: int = 1,
     page_size: int = 25,
-    limit: int = 100
+    limit: int = 100,
 ):
     """Get transactions with pagination and filtering"""
     # Use page_size if provided, otherwise fall back to limit for backwards compatibility
     actual_limit = min(page_size, limit, 100)  # Cap at 100 for performance
     skip = (page - 1) * actual_limit
-    
+
     # Build query
     query = {}
     if client_id:
@@ -6732,45 +6738,123 @@ async def get_transactions(
         query["$or"] = [
             {"reference": {"$regex": search, "$options": "i"}},
             {"client_name": {"$regex": search, "$options": "i"}},
-            {"transaction_id": {"$regex": search, "$options": "i"}}
+            {"transaction_id": {"$regex": search, "$options": "i"}},
         ]
-    
+
     # Try cache first
-    cache_key = get_cache_key("transactions:list", page=page, page_size=actual_limit, 
-                              client_id=client_id, transaction_type=transaction_type, status=status,
-                              search=search, date_from=date_from, date_to=date_to)
+    cache_key = get_cache_key(
+        "transactions:list",
+        page=page,
+        page_size=actual_limit,
+        client_id=client_id,
+        transaction_type=transaction_type,
+        status=status,
+        search=search,
+        date_from=date_from,
+        date_to=date_to,
+    )
     cached = get_cached(cache_key)
     if cached:
         return cached
-    
+
     # Get total count for pagination
     total = await db.transactions.count_documents(query)
     total_pages = (total + actual_limit - 1) // actual_limit
-    
-    transactions = await db.transactions.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(actual_limit).to_list(actual_limit)
-    
-    # Enrich transactions with client email
-    client_ids = list(set(tx.get("client_id") for tx in transactions if tx.get("client_id")))
+
+    transactions = (
+        await db.transactions.find(query, {"_id": 0})
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(actual_limit)
+        .to_list(actual_limit)
+    )
+
+    # Enrich transactions with client email and destination names
+    client_ids = list(
+        set(tx.get("client_id") for tx in transactions if tx.get("client_id"))
+    )
     clients_map = {}
     if client_ids:
-        clients = await db.clients.find({"client_id": {"$in": client_ids}}, {"_id": 0, "client_id": 1, "email": 1}).to_list(len(client_ids))
+        clients = await db.clients.find(
+            {"client_id": {"$in": client_ids}}, {"_id": 0, "client_id": 1, "email": 1}
+        ).to_list(len(client_ids))
         clients_map = {c["client_id"]: c.get("email", "") for c in clients}
-    
+
+    # Enrich with destination names for transactions missing them
+    psp_ids = list(
+        set(
+            tx.get("psp_id")
+            for tx in transactions
+            if tx.get("psp_id") and not tx.get("psp_name")
+        )
+    )
+    treasury_ids = list(
+        set(
+            tx.get("destination_account_id")
+            for tx in transactions
+            if tx.get("destination_account_id")
+            and not tx.get("destination_account_name")
+            and tx.get("destination_type") in ["treasury", "usdt"]
+        )
+    )
+    vendor_ids = list(
+        set(
+            tx.get("vendor_id")
+            for tx in transactions
+            if tx.get("vendor_id") and not tx.get("vendor_name")
+        )
+    )
+
+    psps_map = {}
+    if psp_ids:
+        psps_list = await db.psps.find(
+            {"psp_id": {"$in": psp_ids}}, {"_id": 0, "psp_id": 1, "psp_name": 1}
+        ).to_list(len(psp_ids))
+        psps_map = {p["psp_id"]: p["psp_name"] for p in psps_list}
+    treasury_map = {}
+    if treasury_ids:
+        treasury_list = await db.treasury_accounts.find(
+            {"account_id": {"$in": treasury_ids}},
+            {"_id": 0, "account_id": 1, "account_name": 1},
+        ).to_list(len(treasury_ids))
+        treasury_map = {t["account_id"]: t["account_name"] for t in treasury_list}
+    vendors_map = {}
+    if vendor_ids:
+        vendors_list = await db.vendors.find(
+            {"vendor_id": {"$in": vendor_ids}},
+            {"_id": 0, "vendor_id": 1, "vendor_name": 1},
+        ).to_list(len(vendor_ids))
+        vendors_map = {v["vendor_id"]: v["vendor_name"] for v in vendors_list}
+
     for tx in transactions:
         tx["client_email"] = clients_map.get(tx.get("client_id"), "")
-    
+        if tx.get("psp_id") and not tx.get("psp_name"):
+            tx["psp_name"] = psps_map.get(tx["psp_id"])
+        if (
+            tx.get("destination_account_id")
+            and not tx.get("destination_account_name")
+            and tx.get("destination_type") in ["treasury", "usdt"]
+        ):
+            tx["destination_account_name"] = treasury_map.get(
+                tx["destination_account_id"]
+            )
+        if tx.get("vendor_id") and not tx.get("vendor_name"):
+            tx["vendor_name"] = vendors_map.get(tx["vendor_id"])
+
     result = {
         "items": transactions,
         "total": total,
         "page": page,
         "page_size": actual_limit,
-        "total_pages": total_pages
+        "total_pages": total_pages,
     }
-    
+
     # Cache the result
-    set_cached(cache_key, result, CACHE_TTL.get('transactions', 30))
-    
+    set_cached(cache_key, result, CACHE_TTL.get("transactions", 30))
+
     return result
+
+
 
 @api_router.get("/transactions/pending")
 async def get_pending_transactions(user: dict = Depends(require_permission(Modules.TRANSACTIONS, Actions.VIEW))):
@@ -7316,37 +7400,133 @@ async def create_transaction(
 
 
 @api_router.put("/transactions/{transaction_id}")
-async def update_transaction(request: Request, transaction_id: str, update_data: TransactionUpdate, user: dict = Depends(require_permission(Modules.TRANSACTIONS, Actions.EDIT))):
+async def update_transaction(
+    request: Request,
+    transaction_id: str,
+    update_data: TransactionUpdate,
+    user: dict = Depends(require_permission(Modules.TRANSACTIONS, Actions.EDIT)),
+):
 
     updates = {k: v for k, v in update_data.model_dump().items() if v is not None}
     if not updates:
         raise HTTPException(status_code=400, detail="No updates provided")
-    
+
     tx = await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    
+
     now = datetime.now(timezone.utc)
-    
+
+    # Editable fields only allowed on pending transactions
+    editable_fields = {
+        "crm_reference",
+        "amount",
+        "base_amount",
+        "base_currency",
+        "exchange_rate",
+        "reference",
+    }
+    has_editable_fields = any(k in editable_fields for k in updates)
+    if has_editable_fields:
+        if tx["status"] != TransactionStatus.PENDING:
+            raise HTTPException(
+                status_code=400,
+                detail="These fields can only be edited on pending transactions",
+            )
+
+    # Validate CRM reference uniqueness if being updated
+    if "crm_reference" in updates and updates["crm_reference"]:
+        existing_crm = await db.transactions.find_one(
+            {
+                "crm_reference": updates["crm_reference"].strip(),
+                "transaction_id": {"$ne": transaction_id},
+            },
+            {"_id": 0},
+        )
+        if existing_crm:
+            raise HTTPException(
+                status_code=400,
+                detail=f"CRM Reference '{updates['crm_reference']}' already exists",
+            )
+        updates["crm_reference"] = updates["crm_reference"].strip()
+
+    # Validate reference uniqueness if being updated
+    if "reference" in updates and updates["reference"]:
+        existing_ref = await db.transactions.find_one(
+            {
+                "reference": updates["reference"].strip(),
+                "transaction_id": {"$ne": transaction_id},
+            },
+            {"_id": 0},
+        )
+        if existing_ref:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Reference '{updates['reference']}' already exists",
+            )
+        updates["reference"] = updates["reference"].strip()
+
+    # Validate amounts
+    if "amount" in updates:
+        updates["amount"] = float(updates["amount"])
+        if updates["amount"] <= 0:
+            raise HTTPException(status_code=400, detail="Amount must be positive")
+    if "base_amount" in updates and updates["base_amount"] is not None:
+        updates["base_amount"] = float(updates["base_amount"])
+        if updates["base_amount"] <= 0:
+            raise HTTPException(status_code=400, detail="Base amount must be positive")
+    if "exchange_rate" in updates and updates["exchange_rate"] is not None:
+        updates["exchange_rate"] = float(updates["exchange_rate"])
+        if updates["exchange_rate"] <= 0:
+            raise HTTPException(
+                status_code=400, detail="Exchange rate must be positive"
+            )
+
+    # Auto-calculate USD amount if base_amount and exchange_rate are provided
+    new_base = updates.get("base_amount", tx.get("base_amount"))
+    new_rate = updates.get("exchange_rate", tx.get("exchange_rate"))
+    new_base_currency = updates.get("base_currency", tx.get("base_currency", "USD"))
+    if new_base_currency and new_base_currency != "USD" and new_base and new_rate:
+        updates["amount"] = round(float(new_base) * float(new_rate), 2)
+
     # If approving/completing or rejecting transaction
-    if updates.get("status") in [TransactionStatus.APPROVED, TransactionStatus.COMPLETED, TransactionStatus.REJECTED]:
+    if updates.get("status") in [
+        TransactionStatus.APPROVED,
+        TransactionStatus.COMPLETED,
+        TransactionStatus.REJECTED,
+    ]:
         updates["processed_by"] = user["user_id"]
         updates["processed_by_name"] = user["name"]
         updates["processed_at"] = now.isoformat()
-        
+
         # Update treasury balance if completed
-        if updates.get("status") == TransactionStatus.COMPLETED and tx.get("destination_account_id"):
-            balance_change = tx["amount"] if tx["transaction_type"] == TransactionType.DEPOSIT else -tx["amount"]
+        if updates.get("status") == TransactionStatus.COMPLETED and tx.get(
+            "destination_account_id"
+        ):
+            balance_change = (
+                tx["amount"]
+                if tx["transaction_type"] == TransactionType.DEPOSIT
+                else -tx["amount"]
+            )
             await db.treasury_accounts.update_one(
                 {"account_id": tx["destination_account_id"]},
-                {"$inc": {"balance": balance_change}, "$set": {"updated_at": now.isoformat()}}
+                {
+                    "$inc": {"balance": balance_change},
+                    "$set": {"updated_at": now.isoformat()},
+                },
             )
-    
-    await db.transactions.update_one({"transaction_id": transaction_id}, {"$set": updates})
-    
+
+    updates["updated_at"] = now.isoformat()
+    await db.transactions.update_one(
+        {"transaction_id": transaction_id}, {"$set": updates}
+    )
+
     await log_activity(request, user, "edit", "transactions", "Updated transaction")
 
-    return await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
+    return await db.transactions.find_one(
+        {"transaction_id": transaction_id}, {"_id": 0}
+    )
+
 
 @api_router.put("/transactions/{transaction_id}/assign")
 async def assign_transaction_destination(
@@ -7922,9 +8102,18 @@ async def create_transaction_request(
     if transaction_type == "deposit":
         tx_id = f"tx_{uuid.uuid4().hex[:12]}"
         vendor_info = None
+        psp_info = None
+        destination_account = None
+
         if vendor_id:
             vendor_info = await db.vendors.find_one(
                 {"vendor_id": vendor_id}, {"_id": 0}
+            )
+        if psp_id:
+            psp_info = await db.psps.find_one({"psp_id": psp_id}, {"_id": 0})
+        if destination_account_id and destination_type in ["treasury", "usdt"]:
+            destination_account = await db.treasury_accounts.find_one(
+                {"account_id": destination_account_id}, {"_id": 0}
             )
 
         # Calculate vendor commission
@@ -7942,6 +8131,31 @@ async def create_transaction_request(
                 v_comm_base = round(v_base * v_comm_rate / 100, 2)
                 v_comm_amt = round(amount * v_comm_rate / 100, 2)
 
+        # Calculate PSP commission if applicable
+        psp_commission_amount = 0.0
+        psp_net_amount = amount
+        psp_expected_settlement_date = None
+        psp_reserve_fund_amount = 0.0
+        psp_holding_release_date = None
+        if destination_type == "psp" and psp_info:
+            comm_rate = psp_info.get("commission_rate", 0) / 100
+            psp_commission_amount = round(amount * comm_rate, 2)
+            psp_net_amount = amount - psp_commission_amount
+            settlement_days = psp_info.get("settlement_days", 1)
+            psp_expected_settlement_date = (
+                now + timedelta(days=settlement_days)
+            ).isoformat()
+            reserve_fund_rate_pct = psp_info.get(
+                "reserve_fund_rate", psp_info.get("chargeback_rate", 0)
+            )
+            psp_reserve_fund_amount = round(amount * reserve_fund_rate_pct / 100, 2)
+            holding_days = psp_info.get("holding_days", 0)
+            psp_holding_release_date = (
+                (now + timedelta(days=holding_days)).isoformat()
+                if holding_days > 0
+                else None
+            )
+
         tx_doc = {
             "transaction_id": tx_id,
             "client_id": client_id,
@@ -7953,10 +8167,33 @@ async def create_transaction_request(
             "base_amount": base_amount if base_currency != "USD" else None,
             "exchange_rate": exchange_rate,
             "destination_type": destination_type,
-            "destination_account_id": destination_account_id,
+            "destination_account_id": (
+                destination_account_id
+                if destination_type in ["treasury", "usdt"]
+                else None
+            ),
+            "destination_account_name": (
+                destination_account["account_name"] if destination_account else None
+            ),
+            "destination_bank_name": (
+                destination_account.get("bank_name") if destination_account else None
+            ),
             "vendor_id": vendor_id,
             "vendor_name": vendor_info["vendor_name"] if vendor_info else None,
-            "psp_id": psp_id,
+            "psp_id": psp_id if destination_type == "psp" else None,
+            "psp_name": psp_info["psp_name"] if psp_info else None,
+            "psp_commission_rate": psp_info["commission_rate"] if psp_info else None,
+            "psp_commission_amount": psp_commission_amount if psp_info else None,
+            "psp_net_amount": psp_net_amount if psp_info else None,
+            "psp_expected_settlement_date": psp_expected_settlement_date,
+            "psp_reserve_fund_rate": (
+                psp_info.get("reserve_fund_rate", psp_info.get("chargeback_rate", 0))
+                if psp_info
+                else None
+            ),
+            "psp_reserve_fund_amount": psp_reserve_fund_amount if psp_info else None,
+            "psp_holding_days": psp_info.get("holding_days", 0) if psp_info else None,
+            "psp_holding_release_date": psp_holding_release_date,
             "client_bank_name": client_bank_name,
             "client_bank_account_name": client_bank_account_name,
             "client_bank_account_number": client_bank_account_number,
@@ -8065,6 +8302,7 @@ async def create_transaction_request(
     )
 
 
+
 @api_router.put("/transaction-requests/{request_id}")
 async def update_transaction_request(
     request: Request,
@@ -8117,7 +8355,9 @@ async def process_transaction_request(
     request: Request,
     request_id: str,
     data: dict = Body(...),
-    user: dict = Depends(require_permission(Modules.TRANSACTION_REQUESTS, Actions.APPROVE))
+    user: dict = Depends(
+        require_permission(Modules.TRANSACTION_REQUESTS, Actions.APPROVE)
+    ),
 ):
     """Process a pending request — creates a real transaction in the Transactions collection.
     Only for withdrawals. Requires captcha verification."""
@@ -8125,29 +8365,44 @@ async def process_transaction_request(
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
     if req["status"] != "pending":
-        raise HTTPException(status_code=400, detail="Only pending requests can be processed")
-    
+        raise HTTPException(
+            status_code=400, detail="Only pending requests can be processed"
+        )
+
     # Verify captcha
     captcha_answer = data.get("captcha_answer")
     expected = data.get("captcha_expected")
     if not captcha_answer or str(captcha_answer) != str(expected):
         raise HTTPException(status_code=400, detail="Invalid captcha answer")
-    
+
     now = datetime.now(timezone.utc)
-    
+
     # Create real transaction in the transactions collection
     tx_id = f"tx_{uuid.uuid4().hex[:12]}"
-    
+
     client = await db.clients.find_one({"client_id": req["client_id"]}, {"_id": 0})
     usd_amount = req["amount"]
     base_currency = req.get("base_currency", "USD")
     base_amount = req.get("base_amount")
-    
+
     # Get vendor info if exchanger destination
     vendor_info = None
+    psp_info = None
+    destination_account = None
     if req.get("vendor_id"):
-        vendor_info = await db.vendors.find_one({"vendor_id": req["vendor_id"]}, {"_id": 0})
-    
+        vendor_info = await db.vendors.find_one(
+            {"vendor_id": req["vendor_id"]}, {"_id": 0}
+        )
+    if req.get("psp_id"):
+        psp_info = await db.psps.find_one({"psp_id": req["psp_id"]}, {"_id": 0})
+    if req.get("destination_account_id") and req.get("destination_type") in [
+        "treasury",
+        "usdt",
+    ]:
+        destination_account = await db.treasury_accounts.find_one(
+            {"account_id": req["destination_account_id"]}, {"_id": 0}
+        )
+
     # Calculate vendor commission
     vendor_commission_rate = 0.0
     vendor_commission_amount = 0.0
@@ -8159,10 +8414,43 @@ async def process_transaction_request(
         else:
             vendor_commission_rate = vendor_info.get("withdrawal_commission", 0)
         if vendor_commission_rate > 0:
-            v_base = base_amount if (base_currency and base_currency != "USD" and base_amount) else usd_amount
-            vendor_commission_base_amount = round(v_base * vendor_commission_rate / 100, 2)
-            vendor_commission_amount = round(usd_amount * vendor_commission_rate / 100, 2)
-    
+            v_base = (
+                base_amount
+                if (base_currency and base_currency != "USD" and base_amount)
+                else usd_amount
+            )
+            vendor_commission_base_amount = round(
+                v_base * vendor_commission_rate / 100, 2
+            )
+            vendor_commission_amount = round(
+                usd_amount * vendor_commission_rate / 100, 2
+            )
+
+    # Calculate PSP commission if applicable
+    psp_commission_amount = 0.0
+    psp_net_amount = usd_amount
+    psp_expected_settlement_date = None
+    psp_reserve_fund_amount = 0.0
+    psp_holding_release_date = None
+    if req.get("destination_type") == "psp" and psp_info:
+        comm_rate = psp_info.get("commission_rate", 0) / 100
+        psp_commission_amount = round(usd_amount * comm_rate, 2)
+        psp_net_amount = usd_amount - psp_commission_amount
+        settlement_days = psp_info.get("settlement_days", 1)
+        psp_expected_settlement_date = (
+            now + timedelta(days=settlement_days)
+        ).isoformat()
+        reserve_fund_rate_pct = psp_info.get(
+            "reserve_fund_rate", psp_info.get("chargeback_rate", 0)
+        )
+        psp_reserve_fund_amount = round(usd_amount * reserve_fund_rate_pct / 100, 2)
+        holding_days = psp_info.get("holding_days", 0)
+        psp_holding_release_date = (
+            (now + timedelta(days=holding_days)).isoformat()
+            if holding_days > 0
+            else None
+        )
+
     tx_doc = {
         "transaction_id": tx_id,
         "client_id": req["client_id"],
@@ -8174,10 +8462,33 @@ async def process_transaction_request(
         "base_amount": base_amount if base_currency != "USD" else None,
         "exchange_rate": req.get("exchange_rate"),
         "destination_type": req.get("destination_type", "bank"),
-        "destination_account_id": req.get("destination_account_id"),
+        "destination_account_id": (
+            req.get("destination_account_id")
+            if req.get("destination_type") in ["treasury", "usdt"]
+            else None
+        ),
+        "destination_account_name": (
+            destination_account["account_name"] if destination_account else None
+        ),
+        "destination_bank_name": (
+            destination_account.get("bank_name") if destination_account else None
+        ),
         "vendor_id": req.get("vendor_id"),
         "vendor_name": vendor_info["vendor_name"] if vendor_info else None,
-        "psp_id": req.get("psp_id"),
+        "psp_id": req.get("psp_id") if req.get("destination_type") == "psp" else None,
+        "psp_name": psp_info["psp_name"] if psp_info else None,
+        "psp_commission_rate": psp_info["commission_rate"] if psp_info else None,
+        "psp_commission_amount": psp_commission_amount if psp_info else None,
+        "psp_net_amount": psp_net_amount if psp_info else None,
+        "psp_expected_settlement_date": psp_expected_settlement_date,
+        "psp_reserve_fund_rate": (
+            psp_info.get("reserve_fund_rate", psp_info.get("chargeback_rate", 0))
+            if psp_info
+            else None
+        ),
+        "psp_reserve_fund_amount": psp_reserve_fund_amount if psp_info else None,
+        "psp_holding_days": psp_info.get("holding_days", 0) if psp_info else None,
+        "psp_holding_release_date": psp_holding_release_date,
         "client_bank_name": req.get("client_bank_name"),
         "client_bank_account_name": req.get("client_bank_account_name"),
         "client_bank_account_number": req.get("client_bank_account_number"),
@@ -8185,15 +8496,24 @@ async def process_transaction_request(
         "client_bank_currency": req.get("client_bank_currency"),
         "client_usdt_address": req.get("client_usdt_address"),
         "client_usdt_network": req.get("client_usdt_network"),
-        "vendor_commission_rate": vendor_commission_rate if vendor_commission_rate > 0 else None,
-        "vendor_commission_amount": vendor_commission_amount if vendor_commission_amount > 0 else None,
-        "vendor_commission_base_amount": vendor_commission_base_amount if vendor_commission_base_amount > 0 else None,
-        "vendor_commission_base_currency": base_currency if vendor_commission_base_amount > 0 else None,
+        "vendor_commission_rate": (
+            vendor_commission_rate if vendor_commission_rate > 0 else None
+        ),
+        "vendor_commission_amount": (
+            vendor_commission_amount if vendor_commission_amount > 0 else None
+        ),
+        "vendor_commission_base_amount": (
+            vendor_commission_base_amount if vendor_commission_base_amount > 0 else None
+        ),
+        "vendor_commission_base_currency": (
+            base_currency if vendor_commission_base_amount > 0 else None
+        ),
         "transaction_mode": "bank",
         "status": TransactionStatus.PENDING,
         "description": req.get("description"),
         "reference": req.get("reference") or f"REF{uuid.uuid4().hex[:8].upper()}",
         "crm_reference": req.get("crm_reference"),
+        "transaction_date": req.get("transaction_date") or now.strftime("%Y-%m-%d"),
         "proof_image": req.get("proof_image"),
         "created_by": req.get("created_by"),
         "created_by_name": req.get("created_by_name"),
@@ -8205,48 +8525,81 @@ async def process_transaction_request(
         "settlement_status": None,
         "request_id": request_id,
         "created_at": now.isoformat(),
-        "processed_at": None
+        "processed_at": None,
     }
-    
+
     await db.transactions.insert_one(tx_doc)
-    
+
     # Update request status
     await db.transaction_requests.update_one(
         {"request_id": request_id},
-        {"$set": {
-            "status": "processed",
-            "processed_at": now.isoformat(),
-            "processed_by": user["user_id"],
-            "processed_by_name": user["name"],
-            "transaction_id": tx_id
-        }}
+        {
+            "$set": {
+                "status": "processed",
+                "processed_at": now.isoformat(),
+                "processed_by": user["user_id"],
+                "processed_by_name": user["name"],
+                "transaction_id": tx_id,
+            }
+        },
     )
-    
+
     # Send notifications
     import asyncio
+
     if req.get("destination_type") == "vendor" and req.get("vendor_id"):
-        amt_display = f"{base_amount:,.2f} {base_currency}" if base_currency and base_currency != "USD" and base_amount else f"${usd_amount:,.2f} USD"
-        asyncio.create_task(send_exchanger_notification("transaction", req["vendor_id"], {
-            "reference": tx_doc["reference"],
-            "type": req["transaction_type"],
-            "client": req.get("client_name", "Unknown"),
-            "amount_display": amt_display,
-        }))
+        amt_display = (
+            f"{base_amount:,.2f} {base_currency}"
+            if base_currency and base_currency != "USD" and base_amount
+            else f"${usd_amount:,.2f} USD"
+        )
+        asyncio.create_task(
+            send_exchanger_notification(
+                "transaction",
+                req["vendor_id"],
+                {
+                    "reference": tx_doc["reference"],
+                    "type": req["transaction_type"],
+                    "client": req.get("client_name", "Unknown"),
+                    "amount_display": amt_display,
+                },
+            )
+        )
     else:
-        asyncio.create_task(send_approval_notification("transaction", {
-            "reference": tx_doc["reference"],
-            "type": req["transaction_type"],
-            "client": req.get("client_name", "Unknown"),
-            "amount": usd_amount,
-            "base_amount": base_amount,
-            "base_currency": base_currency,
-            "destination": vendor_info["vendor_name"] if vendor_info else req.get("destination_type", "-"),
-            "created_by": user["name"]
-        }))
-    
-    await log_activity(request, user, "approve", "transaction_requests", f"Processed request → TX {tx_id}")
-    
-    return {"message": "Request processed", "transaction_id": tx_id, "request_id": request_id}
+        asyncio.create_task(
+            send_approval_notification(
+                "transaction",
+                {
+                    "reference": tx_doc["reference"],
+                    "type": req["transaction_type"],
+                    "client": req.get("client_name", "Unknown"),
+                    "amount": usd_amount,
+                    "base_amount": base_amount,
+                    "base_currency": base_currency,
+                    "destination": (
+                        vendor_info["vendor_name"]
+                        if vendor_info
+                        else req.get("destination_type", "-")
+                    ),
+                    "created_by": user["name"],
+                },
+            )
+        )
+
+    await log_activity(
+        request,
+        user,
+        "approve",
+        "transaction_requests",
+        f"Processed request → TX {tx_id}",
+    )
+
+    return {
+        "message": "Request processed",
+        "transaction_id": tx_id,
+        "request_id": request_id,
+    }
+
 
 @api_router.delete("/transaction-requests/{request_id}")
 async def delete_transaction_request(request: Request, request_id: str, user: dict = Depends(require_permission(Modules.TRANSACTION_REQUESTS, Actions.DELETE))):
