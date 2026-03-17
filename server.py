@@ -7604,52 +7604,73 @@ async def assign_transaction_destination(
 
 @api_router.post("/transactions/{transaction_id}/approve")
 async def approve_transaction(
-
     request: Request,
-
-    transaction_id: str, 
+    transaction_id: str,
     source_account_id: Optional[str] = None,
+    bank_receipt_date: Optional[str] = None,
     require_proof: bool = True,
-    user: dict = Depends(require_permission(Modules.TRANSACTIONS, Actions.APPROVE))
+    user: dict = Depends(require_permission(Modules.TRANSACTIONS, Actions.APPROVE)),
 ):
     """Approve a pending transaction"""
     tx = await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    
+
     if tx["status"] != TransactionStatus.PENDING:
         raise HTTPException(status_code=400, detail="Transaction is not pending")
-    
+
     now = datetime.now(timezone.utc)
-    
+
+    # Use bank_receipt_date for treasury records if provided, otherwise use current time
+    # Normalize to ISO datetime format for consistent querying
+    if bank_receipt_date:
+        treasury_date = (
+            f"{bank_receipt_date}T00:00:00"
+            if "T" not in bank_receipt_date
+            else bank_receipt_date
+        )
+    else:
+        treasury_date = now.isoformat()
+
     updates = {
         "status": TransactionStatus.APPROVED,
         "processed_by": user["user_id"],
         "processed_by_name": user["name"],
-        "processed_at": now.isoformat()
+        "processed_at": now.isoformat(),
     }
-    
+
+    if bank_receipt_date:
+        updates["bank_receipt_date"] = bank_receipt_date
+
     # For deposits, require proof of payment screenshot
     if tx["transaction_type"] == TransactionType.DEPOSIT:
         if require_proof and not tx.get("accountant_proof_image"):
-            raise HTTPException(status_code=400, detail="Proof of payment screenshot is required for deposit approvals")
-    
+            raise HTTPException(
+                status_code=400,
+                detail="Proof of payment screenshot is required for deposit approvals",
+            )
+
     # For withdrawals with bank/usdt destination, require source account
     if tx["transaction_type"] == TransactionType.WITHDRAWAL:
         if tx.get("destination_type") in ["bank", "usdt"]:
             if not source_account_id:
-                raise HTTPException(status_code=400, detail="Source account is required for withdrawal approvals")
-            
+                raise HTTPException(
+                    status_code=400,
+                    detail="Source account is required for withdrawal approvals",
+                )
+
             # Verify source account exists and has sufficient balance
-            source_account = await db.treasury_accounts.find_one({"account_id": source_account_id}, {"_id": 0})
+            source_account = await db.treasury_accounts.find_one(
+                {"account_id": source_account_id}, {"_id": 0}
+            )
             if not source_account:
                 raise HTTPException(status_code=404, detail="Source account not found")
-            
+
             # Calculate withdrawal amount in source account's currency
             source_currency = source_account.get("currency", "USD")
             tx_currency = tx.get("currency", "USD")
             withdrawal_amount = tx["amount"]
-            
+
             # PRIORITY: Use manual base_amount if source currency matches base_currency
             # This ensures the treasury uses the same amount the user entered (e.g., 10,000 AED)
             if tx.get("base_currency") == source_currency and tx.get("base_amount"):
@@ -7658,7 +7679,11 @@ async def approve_transaction(
             # Convert if currencies are different and no matching base_amount
             elif tx_currency == "USD" and source_currency != "USD":
                 # Convert from USD to source account currency using manual exchange rate if available
-                if tx.get("exchange_rate") and tx.get("base_amount") and tx.get("base_currency") == source_currency:
+                if (
+                    tx.get("exchange_rate")
+                    and tx.get("base_amount")
+                    and tx.get("base_currency") == source_currency
+                ):
                     withdrawal_amount = tx["base_amount"]
                 else:
                     withdrawal_amount = convert_from_usd(tx["amount"], source_currency)
@@ -7669,29 +7694,43 @@ async def approve_transaction(
                 # Convert via USD as intermediate
                 usd_amount = convert_to_usd(tx["amount"], tx_currency)
                 withdrawal_amount = convert_from_usd(usd_amount, source_currency)
-            
+
             if source_account.get("balance", 0) < withdrawal_amount:
-                raise HTTPException(status_code=400, detail=f"Insufficient balance in source account. Required: {withdrawal_amount:,.2f} {source_currency}, Available: {source_account.get('balance', 0):,.2f} {source_currency}")
-            
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Insufficient balance in source account. Required: {withdrawal_amount:,.2f} {source_currency}, Available: {source_account.get('balance', 0):,.2f} {source_currency}",
+                )
+
             # Deduct from source account
             await db.treasury_accounts.update_one(
                 {"account_id": source_account_id},
-                {"$inc": {"balance": -withdrawal_amount}, "$set": {"updated_at": now.isoformat()}}
+                {
+                    "$inc": {"balance": -withdrawal_amount},
+                    "$set": {"updated_at": now.isoformat()},
+                },
             )
-            
+
             updates["source_account_id"] = source_account_id
             updates["source_account_name"] = source_account.get("account_name")
             updates["withdrawal_amount_in_source_currency"] = withdrawal_amount
             updates["source_currency"] = source_currency
-            
+
             # Record treasury transaction
             treasury_tx_id = f"ttx_{uuid.uuid4().hex[:12]}"
             # Determine original amount/currency - use base_amount if available (manual entry)
-            original_amt = tx.get("base_amount") if tx.get("base_amount") else tx["amount"]
-            original_curr = tx.get("base_currency") if tx.get("base_currency") else tx_currency
+            original_amt = (
+                tx.get("base_amount") if tx.get("base_amount") else tx["amount"]
+            )
+            original_curr = (
+                tx.get("base_currency") if tx.get("base_currency") else tx_currency
+            )
             # Use manual exchange rate if provided, otherwise calculate
-            manual_rate = tx.get("exchange_rate") if tx.get("exchange_rate") else (withdrawal_amount / tx["amount"] if tx["amount"] > 0 else 1)
-            
+            manual_rate = (
+                tx.get("exchange_rate")
+                if tx.get("exchange_rate")
+                else (withdrawal_amount / tx["amount"] if tx["amount"] > 0 else 1)
+            )
+
             treasury_tx_doc = {
                 "treasury_transaction_id": treasury_tx_id,
                 "account_id": source_account_id,
@@ -7704,53 +7743,77 @@ async def approve_transaction(
                 "reference": f"Withdrawal: {tx.get('client_name', 'Client')} - {tx.get('reference', '')}",
                 "transaction_id": transaction_id,
                 "client_id": tx.get("client_id"),
-                "created_at": now.isoformat(),
+                "created_at": treasury_date,
                 "created_by": user["user_id"],
-                "created_by_name": user["name"]
+                "created_by_name": user["name"],
             }
             await db.treasury_transactions.insert_one(treasury_tx_doc)
-        
+
         # For withdrawals with treasury destination, deduct from that treasury account
-        elif tx.get("destination_type") == "treasury" and tx.get("destination_account_id"):
-            dest_account = await db.treasury_accounts.find_one({"account_id": tx["destination_account_id"]}, {"_id": 0})
+        elif tx.get("destination_type") == "treasury" and tx.get(
+            "destination_account_id"
+        ):
+            dest_account = await db.treasury_accounts.find_one(
+                {"account_id": tx["destination_account_id"]}, {"_id": 0}
+            )
             if dest_account:
                 dest_currency = dest_account.get("currency", "USD")
                 tx_currency = tx.get("currency", "USD")
                 withdrawal_amount = tx["amount"]
-                
+
                 if tx.get("base_currency") == dest_currency and tx.get("base_amount"):
                     withdrawal_amount = tx["base_amount"]
                 elif tx_currency == "USD" and dest_currency != "USD":
-                    if tx.get("exchange_rate") and tx.get("base_amount") and tx.get("base_currency") == dest_currency:
+                    if (
+                        tx.get("exchange_rate")
+                        and tx.get("base_amount")
+                        and tx.get("base_currency") == dest_currency
+                    ):
                         withdrawal_amount = tx["base_amount"]
                     else:
-                        withdrawal_amount = convert_from_usd(tx["amount"], dest_currency)
+                        withdrawal_amount = convert_from_usd(
+                            tx["amount"], dest_currency
+                        )
                 elif tx_currency != "USD" and dest_currency == "USD":
                     withdrawal_amount = convert_to_usd(tx["amount"], tx_currency)
                 elif tx_currency != dest_currency:
                     usd_amount = convert_to_usd(tx["amount"], tx_currency)
                     withdrawal_amount = convert_from_usd(usd_amount, dest_currency)
-                
+
                 if dest_account.get("balance", 0) < withdrawal_amount:
-                    raise HTTPException(status_code=400, detail=f"Insufficient balance in treasury account. Required: {withdrawal_amount:,.2f} {dest_currency}, Available: {dest_account.get('balance', 0):,.2f} {dest_currency}")
-                
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Insufficient balance in treasury account. Required: {withdrawal_amount:,.2f} {dest_currency}, Available: {dest_account.get('balance', 0):,.2f} {dest_currency}",
+                    )
+
                 # Deduct from treasury account
                 await db.treasury_accounts.update_one(
                     {"account_id": tx["destination_account_id"]},
-                    {"$inc": {"balance": -withdrawal_amount}, "$set": {"updated_at": now.isoformat()}}
+                    {
+                        "$inc": {"balance": -withdrawal_amount},
+                        "$set": {"updated_at": now.isoformat()},
+                    },
                 )
-                
+
                 updates["source_account_id"] = tx["destination_account_id"]
                 updates["source_account_name"] = dest_account.get("account_name")
                 updates["withdrawal_amount_in_source_currency"] = withdrawal_amount
                 updates["source_currency"] = dest_currency
-                
+
                 # Record treasury transaction
                 treasury_tx_id = f"ttx_{uuid.uuid4().hex[:12]}"
-                original_amt = tx.get("base_amount") if tx.get("base_amount") else tx["amount"]
-                original_curr = tx.get("base_currency") if tx.get("base_currency") else tx_currency
-                manual_rate = tx.get("exchange_rate") if tx.get("exchange_rate") else (withdrawal_amount / tx["amount"] if tx["amount"] > 0 else 1)
-                
+                original_amt = (
+                    tx.get("base_amount") if tx.get("base_amount") else tx["amount"]
+                )
+                original_curr = (
+                    tx.get("base_currency") if tx.get("base_currency") else tx_currency
+                )
+                manual_rate = (
+                    tx.get("exchange_rate")
+                    if tx.get("exchange_rate")
+                    else (withdrawal_amount / tx["amount"] if tx["amount"] > 0 else 1)
+                )
+
                 treasury_tx_doc = {
                     "treasury_transaction_id": treasury_tx_id,
                     "account_id": tx["destination_account_id"],
@@ -7763,22 +7826,27 @@ async def approve_transaction(
                     "reference": f"Withdrawal: {tx.get('client_name', 'Client')} - {tx.get('reference', '')}",
                     "transaction_id": transaction_id,
                     "client_id": tx.get("client_id"),
-                    "created_at": now.isoformat(),
+                    "created_at": treasury_date,
                     "created_by": user["user_id"],
-                    "created_by_name": user["name"]
+                    "created_by_name": user["name"],
                 }
                 await db.treasury_transactions.insert_one(treasury_tx_doc)
-    
+
     # Update treasury balance for deposits going to treasury
-    if tx.get("destination_account_id") and tx["transaction_type"] == TransactionType.DEPOSIT:
+    if (
+        tx.get("destination_account_id")
+        and tx["transaction_type"] == TransactionType.DEPOSIT
+    ):
         # Get the destination account to check its currency
-        dest_account = await db.treasury_accounts.find_one({"account_id": tx["destination_account_id"]}, {"_id": 0})
-        
+        dest_account = await db.treasury_accounts.find_one(
+            {"account_id": tx["destination_account_id"]}, {"_id": 0}
+        )
+
         if dest_account:
             dest_currency = dest_account.get("currency", "USD")
             tx_currency = tx.get("currency", "USD")
             deposit_amount = tx["amount"]
-            
+
             # Check if transaction has base_amount in the same currency as destination
             if tx.get("base_currency") == dest_currency and tx.get("base_amount"):
                 # Use the actual base_amount (e.g., 100,000 AED deposited to AED account)
@@ -7793,18 +7861,25 @@ async def approve_transaction(
                 # Convert via USD as intermediate
                 usd_amount = convert_to_usd(tx["amount"], tx_currency)
                 deposit_amount = convert_from_usd(usd_amount, dest_currency)
-            
+
             await db.treasury_accounts.update_one(
                 {"account_id": tx["destination_account_id"]},
-                {"$inc": {"balance": deposit_amount}, "$set": {"updated_at": now.isoformat()}}
+                {
+                    "$inc": {"balance": deposit_amount},
+                    "$set": {"updated_at": now.isoformat()},
+                },
             )
-            
+
             # Record treasury transaction for deposit
             treasury_tx_id = f"ttx_{uuid.uuid4().hex[:12]}"
             # Determine the original amount and currency for reference
-            original_amt = tx.get("base_amount") if tx.get("base_amount") else tx["amount"]
-            original_curr = tx.get("base_currency") if tx.get("base_currency") else tx_currency
-            
+            original_amt = (
+                tx.get("base_amount") if tx.get("base_amount") else tx["amount"]
+            )
+            original_curr = (
+                tx.get("base_currency") if tx.get("base_currency") else tx_currency
+            )
+
             treasury_tx_doc = {
                 "treasury_transaction_id": treasury_tx_id,
                 "account_id": tx["destination_account_id"],
@@ -7813,26 +7888,30 @@ async def approve_transaction(
                 "currency": dest_currency,
                 "original_amount": original_amt,
                 "original_currency": original_curr,
-                "exchange_rate": tx.get("exchange_rate") or (deposit_amount / tx["amount"] if tx["amount"] > 0 else 1),
+                "exchange_rate": tx.get("exchange_rate")
+                or (deposit_amount / tx["amount"] if tx["amount"] > 0 else 1),
                 "reference": f"Deposit: {tx.get('client_name', 'Client')} - {tx.get('reference', '')}",
                 "transaction_id": transaction_id,
                 "client_id": tx.get("client_id"),
-                "created_at": now.isoformat(),
+                "created_at": treasury_date,
                 "created_by": user["user_id"],
-                "created_by_name": user["name"]
+                "created_by_name": user["name"],
             }
             await db.treasury_transactions.insert_one(treasury_tx_doc)
-    
-    await db.transactions.update_one({"transaction_id": transaction_id}, {"$set": updates})
-    
+
+    await db.transactions.update_one(
+        {"transaction_id": transaction_id}, {"$set": updates}
+    )
+
     # Invalidate transaction cache
     invalidate_transaction_cache()
     invalidate_treasury_cache()
-    
+
     await log_activity(request, user, "approve", "transactions", "Approved transaction")
 
-    return await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
-
+    return await db.transactions.find_one(
+        {"transaction_id": transaction_id}, {"_id": 0}
+    )
 
 
 @api_router.post("/transactions/{transaction_id}/upload-proof")
@@ -13182,92 +13261,119 @@ async def get_account_history_for_reconciliation(
     type: str,
     account_id: str,
     date: str,
-    user: dict = Depends(require_permission(Modules.RECONCILIATION, Actions.VIEW))
+    user: dict = Depends(require_permission(Modules.RECONCILIATION, Actions.VIEW)),
 ):
     """Get transaction history for an account on a specific date"""
     date_start = f"{date}T00:00:00"
     date_end = f"{date}T23:59:59"
-    
+    # Also match date-only strings (e.g., "2026-03-01" without time component)
+    date_only = date
+
     transactions = []
-    
+
     if type == "treasury":
-        # Get treasury transactions
-        txs = await db.treasury_transactions.find({
-            "account_id": account_id,
-            "created_at": {"$gte": date_start, "$lte": date_end}
-        }, {"_id": 0}).to_list(500)
-        
+        # Get treasury transactions - match both ISO datetime and date-only formats
+        txs = await db.treasury_transactions.find(
+            {
+                "account_id": account_id,
+                "$or": [
+                    {"created_at": {"$gte": date_start, "$lte": date_end}},
+                    {"created_at": date_only},
+                ],
+            },
+            {"_id": 0},
+        ).to_list(500)
+
         for tx in txs:
-            transactions.append({
-                "transaction_id": tx.get("treasury_transaction_id"),
-                "reference": tx.get("reference", ""),
-                "amount": tx.get("amount", 0),
-                "currency": tx.get("currency", "USD"),
-                "description": tx.get("reference", "Treasury Transaction"),
-                "created_at": tx.get("created_at"),
-                "type": tx.get("transaction_type")
-            })
-        
+            transactions.append(
+                {
+                    "transaction_id": tx.get("treasury_transaction_id"),
+                    "reference": tx.get("reference", ""),
+                    "amount": tx.get("amount", 0),
+                    "currency": tx.get("currency", "USD"),
+                    "description": tx.get("reference", "Treasury Transaction"),
+                    "created_at": tx.get("created_at"),
+                    "type": tx.get("transaction_type"),
+                }
+            )
+
         # Also get regular transactions to this account
-        reg_txs = await db.transactions.find({
-            "destination_account_id": account_id,
-            "created_at": {"$gte": date_start, "$lte": date_end},
-            "status": {"$in": ["approved", "completed"]}
-        }, {"_id": 0}).to_list(500)
-        
+        reg_txs = await db.transactions.find(
+            {
+                "destination_account_id": account_id,
+                "created_at": {"$gte": date_start, "$lte": date_end},
+                "status": {"$in": ["approved", "completed"]},
+            },
+            {"_id": 0},
+        ).to_list(500)
+
         for tx in reg_txs:
-            transactions.append({
-                "transaction_id": tx.get("transaction_id"),
-                "reference": tx.get("reference", ""),
-                "amount": tx.get("amount", 0),
-                "currency": tx.get("currency", "USD"),
-                "description": f"{tx.get('transaction_type', 'Transaction')} - {tx.get('client_name', '')}",
-                "created_at": tx.get("created_at"),
-                "type": tx.get("transaction_type")
-            })
-            
+            transactions.append(
+                {
+                    "transaction_id": tx.get("transaction_id"),
+                    "reference": tx.get("reference", ""),
+                    "amount": tx.get("amount", 0),
+                    "currency": tx.get("currency", "USD"),
+                    "description": f"{tx.get('transaction_type', 'Transaction')} - {tx.get('client_name', '')}",
+                    "created_at": tx.get("created_at"),
+                    "type": tx.get("transaction_type"),
+                }
+            )
+
     elif type == "psp":
         # Get PSP transactions
-        txs = await db.transactions.find({
-            "psp_id": account_id,
-            "created_at": {"$gte": date_start, "$lte": date_end},
-            "status": {"$in": ["approved", "completed", "pending"]}
-        }, {"_id": 0}).to_list(500)
-        
+        txs = await db.transactions.find(
+            {
+                "psp_id": account_id,
+                "created_at": {"$gte": date_start, "$lte": date_end},
+                "status": {"$in": ["approved", "completed", "pending"]},
+            },
+            {"_id": 0},
+        ).to_list(500)
+
         for tx in txs:
-            transactions.append({
-                "transaction_id": tx.get("transaction_id"),
-                "reference": tx.get("reference", ""),
-                "amount": tx.get("amount", 0),
-                "currency": tx.get("currency", "USD"),
-                "description": f"{tx.get('transaction_type', 'Transaction')} - {tx.get('client_name', '')}",
-                "created_at": tx.get("created_at"),
-                "type": tx.get("transaction_type")
-            })
-            
+            transactions.append(
+                {
+                    "transaction_id": tx.get("transaction_id"),
+                    "reference": tx.get("reference", ""),
+                    "amount": tx.get("amount", 0),
+                    "currency": tx.get("currency", "USD"),
+                    "description": f"{tx.get('transaction_type', 'Transaction')} - {tx.get('client_name', '')}",
+                    "created_at": tx.get("created_at"),
+                    "type": tx.get("transaction_type"),
+                }
+            )
+
     elif type == "exchanger":
         # Get vendor transactions
-        txs = await db.transactions.find({
-            "vendor_id": account_id,
-            "created_at": {"$gte": date_start, "$lte": date_end},
-            "status": {"$in": ["approved", "completed", "pending"]}
-        }, {"_id": 0}).to_list(500)
-        
+        txs = await db.transactions.find(
+            {
+                "vendor_id": account_id,
+                "created_at": {"$gte": date_start, "$lte": date_end},
+                "status": {"$in": ["approved", "completed", "pending"]},
+            },
+            {"_id": 0},
+        ).to_list(500)
+
         for tx in txs:
-            transactions.append({
-                "transaction_id": tx.get("transaction_id"),
-                "reference": tx.get("reference", ""),
-                "amount": tx.get("amount", 0),
-                "currency": tx.get("currency", "USD"),
-                "description": f"{tx.get('transaction_type', 'Transaction')} - {tx.get('client_name', '')}",
-                "created_at": tx.get("created_at"),
-                "type": tx.get("transaction_type")
-            })
-    
+            transactions.append(
+                {
+                    "transaction_id": tx.get("transaction_id"),
+                    "reference": tx.get("reference", ""),
+                    "amount": tx.get("amount", 0),
+                    "currency": tx.get("currency", "USD"),
+                    "description": f"{tx.get('transaction_type', 'Transaction')} - {tx.get('client_name', '')}",
+                    "created_at": tx.get("created_at"),
+                    "type": tx.get("transaction_type"),
+                }
+            )
+
     # Sort by created_at
     transactions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
-    
+
     return transactions
+
+
 
 
 @api_router.post("/reconciliation/upload-statement")
