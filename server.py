@@ -6702,10 +6702,12 @@ async def reject_settlement(request: Request, settlement_id: str, reason: str = 
 
 # ============== TRANSACTIONS ROUTES ==============
 
+
 @api_router.get("/transactions")
 async def get_transactions(
     user: dict = Depends(require_permission(Modules.TRANSACTIONS, Actions.VIEW)),
     client_id: Optional[str] = None,
+    client_email: Optional[str] = None,
     transaction_type: Optional[str] = None,
     status: Optional[str] = None,
     search: Optional[str] = None,
@@ -6720,10 +6722,21 @@ async def get_transactions(
     actual_limit = min(page_size, limit, 100)  # Cap at 100 for performance
     skip = (page - 1) * actual_limit
 
+    # Resolve client_email → client_id(s)
+    email_client_ids = None
+    if client_email:
+        matched_clients = await db.clients.find(
+            {"email": {"$regex": client_email, "$options": "i"}},
+            {"_id": 0, "client_id": 1},
+        ).to_list(200)
+        email_client_ids = [c["client_id"] for c in matched_clients]
+
     # Build query
     query = {}
     if client_id:
         query["client_id"] = client_id
+    elif email_client_ids is not None:
+        query["client_id"] = {"$in": email_client_ids}
     if transaction_type:
         query["transaction_type"] = transaction_type
     if status:
@@ -6742,10 +6755,10 @@ async def get_transactions(
             {"transaction_id": {"$regex": search, "$options": "i"}},
         ]
 
-    # Skip cache for search queries — always fetch fresh results from DB
+    # Skip cache for search or email filter queries — always fetch fresh results from DB
     cached = None
     cache_key = None
-    if not search:
+    if not search and not client_email:
         cache_key = get_cache_key(
             "transactions:list",
             page=page,
@@ -6857,7 +6870,6 @@ async def get_transactions(
         set_cached(cache_key, result, CACHE_TTL.get("transactions", 30))
 
     return result
-
 
 
 
