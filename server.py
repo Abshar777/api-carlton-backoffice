@@ -4399,7 +4399,7 @@ async def batch_settle_psp_transactions(
     settlement_id = f"stl_{uuid.uuid4().hex[:12]}"
 
     # Use provided settlement_date or current time for treasury/settlement records
-     if body.settlement_date:
+    if body.settlement_date:
         settle_date = (
             f"{body.settlement_date}T00:00:00"
             if "T" not in body.settlement_date
