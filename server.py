@@ -2481,6 +2481,8 @@ class TreasuryTransferRequest(BaseModel):
     amount: float
     exchange_rate: Optional[float] = 1.0
     notes: Optional[str] = None
+    transfer_date: Optional[str] = None
+
 
 @api_router.post("/treasury/transfer")
 async def inter_treasury_transfer(request: Request, transfer: TreasuryTransferRequest, user: dict = Depends(require_permission(Modules.TREASURY, Actions.CREATE))):
@@ -2508,6 +2510,12 @@ async def inter_treasury_transfer(request: Request, transfer: TreasuryTransferRe
     
     now = datetime.now(timezone.utc)
     transfer_id = f"trf_{uuid.uuid4().hex[:12]}"
+    
+    # Use provided transfer_date or current time
+    if transfer.transfer_date:
+        record_date = f"{transfer.transfer_date}T00:00:00" if 'T' not in transfer.transfer_date else transfer.transfer_date
+    else:
+        record_date = now.isoformat()
     
     # Calculate destination amount based on exchange rate
     destination_amount = round(transfer.amount * (transfer.exchange_rate or 1.0), 2)
@@ -2540,7 +2548,7 @@ async def inter_treasury_transfer(request: Request, transfer: TreasuryTransferRe
         "destination_amount": destination_amount,
         "destination_currency": destination.get("currency", "USD"),
         "notes": transfer.notes,
-        "created_at": now.isoformat(),
+        "created_at": record_date,
         "created_by": user["user_id"],
         "created_by_name": user["name"]
     }
@@ -2562,7 +2570,7 @@ async def inter_treasury_transfer(request: Request, transfer: TreasuryTransferRe
         "source_amount": transfer.amount,
         "source_currency": source.get("currency", "USD"),
         "notes": transfer.notes,
-        "created_at": now.isoformat(),
+        "created_at": record_date,
         "created_by": user["user_id"],
         "created_by_name": user["name"]
     }
@@ -2584,7 +2592,6 @@ async def inter_treasury_transfer(request: Request, transfer: TreasuryTransferRe
         "created_at": now.isoformat(),
         "created_by_name": user["name"]
     }
-
 # ============== LP (LIQUIDITY PROVIDER) ROUTES ==============
 
 @api_router.get("/lp")
