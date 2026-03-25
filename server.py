@@ -3567,11 +3567,16 @@ async def get_settlement_transactions(
             "base_currency": 1,
             "exchange_rate": 1,
             "created_at": 1,
+            "transaction_date": 1,
+            "transaction_type": 1,
             "psp_commission_amount": 1,
             "psp_reserve_fund_amount": 1,
             "psp_chargeback_amount": 1,
             "psp_extra_charges": 1,
+            "psp_extra_commission": 1,
+            "psp_withdrawal_extra_commission": 1,
             "psp_gateway_fee": 1,
+            "psp_net_amount": 1,
         },
     ).to_list(len(tx_ids))
     return txs
@@ -3748,12 +3753,13 @@ async def complete_settlement(request: Request, settlement_id: str, user: dict =
 async def get_psp_pending_transactions(
     psp_id: str, user: dict = Depends(require_permission(Modules.PSP, Actions.VIEW))
 ):
-    """Get approved transactions for a PSP that haven't been settled"""
+    """Get approved DEPOSIT transactions for a PSP that haven't been settled"""
     transactions = (
         await db.transactions.find(
             {
                 "psp_id": psp_id,
                 "destination_type": "psp",
+                "transaction_type": "deposit",
                 "status": TransactionStatus.APPROVED,
                 "settled": {"$ne": True},
             },
@@ -3763,6 +3769,136 @@ async def get_psp_pending_transactions(
         .to_list(1000)
     )
     return transactions
+
+
+@api_router.get("/psp/{psp_id}/withdrawal-transactions")
+async def get_psp_withdrawal_transactions(
+    psp_id: str, user: dict = Depends(require_permission(Modules.PSP, Actions.VIEW))
+):
+    """Get withdrawal transactions for a PSP (unsettled only)"""
+    transactions = (
+        await db.transactions.find(
+            {
+                "psp_id": psp_id,
+                "destination_type": "psp",
+                "transaction_type": "withdrawal",
+                "status": {
+                    "$in": [TransactionStatus.APPROVED, TransactionStatus.PENDING]
+                },
+                "settled": {"$ne": True},
+            },
+            {"_id": 0},
+        )
+        .sort("created_at", -1)
+        .to_list(1000)
+    )
+    return transactions
+
+
+@api_router.post("/psp/{psp_id}/deposit-extra-commission")
+async def update_psp_deposit_extra_commission(
+    request: Request,
+    psp_id: str,
+    user: dict = Depends(require_permission(Modules.PSP, Actions.EDIT)),
+):
+    """Add extra commission to a PSP deposit transaction"""
+    body = await request.json()
+    transaction_id = body.get("transaction_id")
+    extra_commission = float(body.get("extra_commission", 0))
+    extra_commission_note = body.get("note", "")
+
+    if not transaction_id:
+        raise HTTPException(status_code=400, detail="Transaction ID required")
+
+    tx = await db.transactions.find_one(
+        {"transaction_id": transaction_id, "psp_id": psp_id}, {"_id": 0}
+    )
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    old_extra = tx.get("psp_extra_commission", 0) or 0
+
+    # Recalculate net amount: gross - commission - extra charges - reserve fund - extra commission
+    gross = tx.get("amount", 0)
+    commission = tx.get("psp_commission_amount", 0)
+    extra_charges = tx.get("psp_extra_charges", 0) or 0
+    reserve_fund = (
+        tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0)) or 0
+    )
+    new_net = round(
+        gross - commission - extra_charges - reserve_fund - extra_commission, 2
+    )
+
+    await db.transactions.update_one(
+        {"transaction_id": transaction_id},
+        {
+            "$set": {
+                "psp_extra_commission": round(extra_commission, 2),
+                "psp_extra_commission_note": extra_commission_note,
+                "psp_net_amount": new_net,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        },
+    )
+
+    # Update PSP pending_settlement: adjust by the difference in extra commission
+    diff = extra_commission - old_extra
+    if diff != 0:
+        await db.psps.update_one(
+            {"psp_id": psp_id}, {"$inc": {"pending_settlement": -diff}}
+        )
+
+    await log_activity(
+        request,
+        user,
+        "edit",
+        "psp",
+        f"Added extra commission ${extra_commission} to PSP deposit {transaction_id}",
+    )
+    return {"message": "Extra commission updated", "new_net_amount": new_net}
+
+
+@api_router.post("/psp/{psp_id}/withdrawal-extra-commission")
+async def update_psp_withdrawal_extra_commission(
+    request: Request,
+    psp_id: str,
+    user: dict = Depends(require_permission(Modules.PSP, Actions.EDIT)),
+):
+    """Add extra commission to a PSP withdrawal transaction"""
+    body = await request.json()
+    transaction_id = body.get("transaction_id")
+    extra_commission = float(body.get("extra_commission", 0))
+    extra_commission_note = body.get("note", "")
+
+    if not transaction_id:
+        raise HTTPException(status_code=400, detail="Transaction ID required")
+
+    tx = await db.transactions.find_one(
+        {"transaction_id": transaction_id, "psp_id": psp_id}, {"_id": 0}
+    )
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    await db.transactions.update_one(
+        {"transaction_id": transaction_id},
+        {
+            "$set": {
+                "psp_withdrawal_extra_commission": round(extra_commission, 2),
+                "psp_withdrawal_extra_commission_note": extra_commission_note,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            }
+        },
+    )
+
+    await log_activity(
+        request,
+        user,
+        "edit",
+        "psp",
+        f"Added extra commission ${extra_commission} to PSP withdrawal {transaction_id}",
+    )
+    return {"message": "Extra commission updated"}
+
 
 
 # Get PSP dashboard summary
@@ -3872,81 +4008,133 @@ async def get_psp_summary(
 
 # Get PSP dashboard summary
 @api_router.get("/psp-summary")
-async def get_psp_summary(user: dict = Depends(require_permission(Modules.PSP, Actions.VIEW))):
+async def get_psp_summary(
+    user: dict = Depends(require_permission(Modules.PSP, Actions.VIEW))
+):
     """Get summary of all PSPs with pending settlements"""
     psps = await db.psps.find({"status": PSPStatus.ACTIVE}, {"_id": 0}).to_list(1000)
     now = datetime.now(timezone.utc)
-    
+
     result = []
     for psp in psps:
         # Get pending transactions count and amount
-        pending_txs = await db.transactions.find({
-            "psp_id": psp["psp_id"],
-            "destination_type": "psp",
-            "status": {"$in": [TransactionStatus.PENDING, TransactionStatus.APPROVED]},
-            "settled": {"$ne": True}
-        }, {"_id": 0}).to_list(1000)
-        
+        pending_txs = await db.transactions.find(
+            {
+                "psp_id": psp["psp_id"],
+                "destination_type": "psp",
+                "transaction_type": "deposit",
+                "status": TransactionStatus.APPROVED,
+                "settled": {"$ne": True},
+            },
+            {"_id": 0},
+        ).to_list(1000)
+
+        # Get unsettled approved withdrawals
+        withdrawal_txs = await db.transactions.find(
+            {
+                "psp_id": psp["psp_id"],
+                "destination_type": "psp",
+                "transaction_type": "withdrawal",
+                "status": TransactionStatus.APPROVED,
+                "settled": {"$ne": True},
+            },
+            {"_id": 0},
+        ).to_list(1000)
+
         pending_count = len(pending_txs)
-        pending_amount_gross = sum(tx.get("psp_net_amount", tx.get("amount", 0)) for tx in pending_txs)
-        
+        pending_amount_gross = sum(
+            tx.get("psp_net_amount", tx.get("amount", 0)) for tx in pending_txs
+        )
+
         # Check for overdue settlements
         overdue_count = 0
         for tx in pending_txs:
             exp_date = tx.get("psp_expected_settlement_date")
             if exp_date:
-                exp_dt = datetime.fromisoformat(exp_date.replace('Z', '+00:00'))
+                exp_dt = datetime.fromisoformat(exp_date.replace("Z", "+00:00"))
                 if exp_dt.tzinfo is None:
                     exp_dt = exp_dt.replace(tzinfo=timezone.utc)
                 if exp_dt < now:
                     overdue_count += 1
-        
+
         # Calculate reserve fund held from pending transactions
-        reserve_fund_rate = psp.get("reserve_fund_rate", psp.get("chargeback_rate", 0)) / 100
+        reserve_fund_rate = (
+            psp.get("reserve_fund_rate", psp.get("chargeback_rate", 0)) / 100
+        )
         reserve_from_pending = 0
         for tx in pending_txs:
             rf = tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0))
             if rf > 0:
                 reserve_from_pending += rf
             else:
-                reserve_from_pending += round(tx.get("amount", 0) * reserve_fund_rate, 2)
+                reserve_from_pending += round(
+                    tx.get("amount", 0) * reserve_fund_rate, 2
+                )
 
-        # Pending Amount = Gross - Commission - Reserve Fund
-        pending_amount = round(pending_amount_gross - reserve_from_pending, 2)
+        # Pending Amount = Deposit Net - Reserve Fund - Withdrawals - Withdrawal Extra Commission
+        withdrawal_total = sum(tx.get("amount", 0) for tx in withdrawal_txs)
+        withdrawal_extra_comm = sum(
+            tx.get("psp_withdrawal_extra_commission", 0) or 0 for tx in withdrawal_txs
+        )
+        pending_amount = max(
+            round(
+                pending_amount_gross
+                - reserve_from_pending
+                - withdrawal_total
+                - withdrawal_extra_comm,
+                2,
+            ),
+            0,
+        )
 
         # Total reserve held includes pending + settled unreleased
         total_reserve_held = reserve_from_pending
 
         # Also count released/unreleased reserve funds from settled transactions
-        settled_with_reserve = await db.transactions.find({
-            "psp_id": psp["psp_id"],
-            "destination_type": "psp",
-            "settled": True,
-            "$or": [
-                {"psp_reserve_fund_amount": {"$gt": 0}},
-                {"psp_chargeback_amount": {"$gt": 0}}
-            ]
-        }, {"_id": 0, "psp_reserve_fund_amount": 1, "psp_chargeback_amount": 1, "reserve_fund_released": 1}).to_list(10000)
-        
+        settled_with_reserve = await db.transactions.find(
+            {
+                "psp_id": psp["psp_id"],
+                "destination_type": "psp",
+                "settled": True,
+                "$or": [
+                    {"psp_reserve_fund_amount": {"$gt": 0}},
+                    {"psp_chargeback_amount": {"$gt": 0}},
+                ],
+            },
+            {
+                "_id": 0,
+                "psp_reserve_fund_amount": 1,
+                "psp_chargeback_amount": 1,
+                "reserve_fund_released": 1,
+            },
+        ).to_list(10000)
+
         held_from_settled = sum(
             tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0))
-            for tx in settled_with_reserve if not tx.get("reserve_fund_released")
+            for tx in settled_with_reserve
+            if not tx.get("reserve_fund_released")
         )
         total_reserve_held += held_from_settled
 
         # Get settlement destination
-        dest = await db.treasury_accounts.find_one({"account_id": psp.get("settlement_destination_id")}, {"_id": 0})
-        
-        result.append({
-            **psp,
-            "pending_transactions_count": pending_count,
-            "pending_amount": pending_amount,
-            "overdue_count": overdue_count,
-            "total_reserve_fund_held": round(total_reserve_held, 2),
-            "settlement_destination_name": dest["account_name"] if dest else "Unknown",
-            "settlement_destination_bank": dest.get("bank_name") if dest else None
-        })
-    
+        dest = await db.treasury_accounts.find_one(
+            {"account_id": psp.get("settlement_destination_id")}, {"_id": 0}
+        )
+
+        result.append(
+            {
+                **psp,
+                "pending_transactions_count": pending_count,
+                "pending_amount": pending_amount,
+                "overdue_count": overdue_count,
+                "total_reserve_fund_held": round(total_reserve_held, 2),
+                "settlement_destination_name": (
+                    dest["account_name"] if dest else "Unknown"
+                ),
+                "settlement_destination_bank": dest.get("bank_name") if dest else None,
+            }
+        )
+
     return result
 
 # Model for PSP transaction charges
@@ -3960,51 +4148,82 @@ class PSPTransactionCharges(BaseModel):
 
 @api_router.put("/psp/transactions/{transaction_id}/charges")
 async def update_psp_transaction_charges(
-
     request: Request,
-
     transaction_id: str,
     charges: PSPTransactionCharges,
-    user: dict = Depends(require_permission(Modules.PSP, Actions.EDIT))
+    user: dict = Depends(require_permission(Modules.PSP, Actions.EDIT)),
 ):
     """Record reserve fund and extra charges on a PSP transaction"""
     tx = await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
-    
+
     if tx.get("destination_type") != "psp":
-        raise HTTPException(status_code=400, detail="Transaction is not a PSP transaction")
-    
+        raise HTTPException(
+            status_code=400, detail="Transaction is not a PSP transaction"
+        )
+
     if tx.get("settled"):
-        raise HTTPException(status_code=400, detail="Cannot update charges on settled transaction")
-    
+        raise HTTPException(
+            status_code=400, detail="Cannot update charges on settled transaction"
+        )
+
     now = datetime.now(timezone.utc)
-    
-    # Calculate new net amount
+
+    # Calculate old net for pending_settlement adjustment
+    old_extra_charges = tx.get("psp_extra_charges", 0) or 0
+    old_reserve_fund = (
+        tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0)) or 0
+    )
+    extra_commission = tx.get("psp_extra_commission", 0) or 0
+
+    # Calculate new net amount (include extra_commission if it exists)
     gross_amount = tx.get("amount", 0)
     commission = tx.get("psp_commission_amount", 0)
-    new_net = gross_amount - commission - charges.reserve_fund_amount - charges.extra_charges
-    
+    new_net = round(
+        gross_amount
+        - commission
+        - charges.reserve_fund_amount
+        - charges.extra_charges
+        - extra_commission,
+        2,
+    )
+
     updates = {
         "psp_reserve_fund_amount": charges.reserve_fund_amount,
         "psp_chargeback_amount": charges.reserve_fund_amount,
         "psp_extra_charges": charges.extra_charges,
         "psp_charges_description": charges.charges_description,
-        "psp_total_deductions": commission + charges.reserve_fund_amount + charges.extra_charges,
+        "psp_total_deductions": commission
+        + charges.reserve_fund_amount
+        + charges.extra_charges
+        + extra_commission,
         "psp_net_amount": new_net,
         "charges_updated_at": now.isoformat(),
         "charges_updated_by": user["user_id"],
-        "charges_updated_by_name": user["name"]
+        "charges_updated_by_name": user["name"],
     }
-    
+
     await db.transactions.update_one(
-        {"transaction_id": transaction_id},
-        {"$set": updates}
+        {"transaction_id": transaction_id}, {"$set": updates}
     )
-    
+
+    # Adjust PSP pending_settlement by the difference in deductions
+    old_deductions = old_extra_charges + old_reserve_fund
+    new_deductions = charges.extra_charges + charges.reserve_fund_amount
+    deduction_diff = new_deductions - old_deductions
+    if deduction_diff != 0 and tx.get("psp_id"):
+        await db.psps.update_one(
+            {"psp_id": tx["psp_id"]},
+            {"$inc": {"pending_settlement": round(-deduction_diff, 2)}},
+        )
+
     await log_activity(request, user, "edit", "psp", "Updated PSP transaction charges")
 
-    return await db.transactions.find_one({"transaction_id": transaction_id}, {"_id": 0})
+    return await db.transactions.find_one(
+        {"transaction_id": transaction_id}, {"_id": 0}
+    )
+
 
 # Mark single PSP transaction as awaiting settlement (holding period)
 @api_router.post("/psp/transactions/{transaction_id}/mark-awaiting")
@@ -4306,6 +4525,7 @@ class BatchSettleRequest(BaseModel):
     settlement_date: Optional[str] = None
 
 
+
 @api_router.post("/psp/{psp_id}/settle-batch")
 async def batch_settle_psp_transactions(
     request: Request,
@@ -4409,7 +4629,6 @@ async def batch_settle_psp_transactions(
         settle_date = now.isoformat()
 
     # Create ONE compound settlement record
-     # Create ONE compound settlement record
     settlement_doc = {
         "settlement_id": settlement_id,
         "psp_id": psp_id,
@@ -4434,7 +4653,7 @@ async def batch_settle_psp_transactions(
         "created_at": settle_date,
         "settled_at": settle_date,
         "created_by": user["user_id"],
-        "created_by_name": user["name"]
+        "created_by_name": user["name"],
     }
     await db.psp_settlements.insert_one(settlement_doc)
 
@@ -4467,7 +4686,7 @@ async def batch_settle_psp_transactions(
         "psp_name": psp["psp_name"],
         "created_at": settle_date,
         "created_by": user["user_id"],
-        "created_by_name": user["name"]
+        "created_by_name": user["name"],
     }
     await db.treasury_transactions.insert_one(treasury_tx)
 
@@ -4488,15 +4707,19 @@ async def batch_settle_psp_transactions(
         },
     )
 
-    # Update PSP stats
+    # Update PSP stats - ensure pending_settlement never goes below 0
+    current_psp = await db.psps.find_one(
+        {"psp_id": psp_id}, {"_id": 0, "pending_settlement": 1}
+    )
+    new_pending = max((current_psp.get("pending_settlement", 0) or 0) - net_amount, 0)
     await db.psps.update_one(
         {"psp_id": psp_id},
         {
+            "$set": {"pending_settlement": round(new_pending, 2)},
             "$inc": {
                 "total_volume": gross_amount,
                 "total_commission": total_commission,
-                "pending_settlement": -net_amount,
-            }
+            },
         },
     )
 
@@ -4512,6 +4735,231 @@ async def batch_settle_psp_transactions(
         {"settlement_id": settlement_id}, {"_id": 0}
     )
     return result
+
+
+# Net Settlement: Settle ALL pending deposits + withdrawals as one net amount
+class NetSettleRequest(BaseModel):
+    destination_account_id: Optional[str] = None
+    settlement_date: Optional[str] = None
+
+
+@api_router.post("/psp/{psp_id}/net-settle")
+async def net_settle_psp(
+    request: Request,
+    psp_id: str,
+    body: NetSettleRequest,
+    user: dict = Depends(require_permission(Modules.PSP, Actions.APPROVE)),
+):
+    """Create a net settlement from ALL pending deposits and withdrawals"""
+    psp = await db.psps.find_one({"psp_id": psp_id}, {"_id": 0})
+    if not psp:
+        raise HTTPException(status_code=404, detail="PSP not found")
+
+    # Fetch all unsettled deposits
+    deposit_txs = await db.transactions.find(
+        {
+            "psp_id": psp_id,
+            "destination_type": "psp",
+            "transaction_type": "deposit",
+            "status": TransactionStatus.APPROVED,
+            "settled": {"$ne": True},
+        },
+        {"_id": 0},
+    ).to_list(10000)
+
+    # Fetch all unsettled approved withdrawals
+    withdrawal_txs = await db.transactions.find(
+        {
+            "psp_id": psp_id,
+            "destination_type": "psp",
+            "transaction_type": "withdrawal",
+            "status": TransactionStatus.APPROVED,
+            "settled": {"$ne": True},
+        },
+        {"_id": 0},
+    ).to_list(10000)
+
+    if not deposit_txs and not withdrawal_txs:
+        raise HTTPException(status_code=400, detail="No pending transactions to settle")
+
+    # Calculate deposit totals
+    dep_gross = sum(tx.get("amount", 0) for tx in deposit_txs)
+    dep_commission = sum(tx.get("psp_commission_amount", 0) or 0 for tx in deposit_txs)
+    dep_reserve = sum(
+        (
+            tx.get("psp_reserve_fund_amount", 0)
+            or tx.get("psp_chargeback_amount", 0)
+            or 0
+        )
+        for tx in deposit_txs
+    )
+    dep_extra_charges = sum(tx.get("psp_extra_charges", 0) or 0 for tx in deposit_txs)
+    dep_extra_comm = sum(tx.get("psp_extra_commission", 0) or 0 for tx in deposit_txs)
+    dep_gateway = sum(tx.get("psp_gateway_fee", 0) or 0 for tx in deposit_txs)
+    dep_total_deductions = (
+        dep_commission + dep_reserve + dep_extra_charges + dep_extra_comm + dep_gateway
+    )
+    dep_net = dep_gross - dep_total_deductions
+
+    # Calculate withdrawal totals
+    wdr_gross = sum(tx.get("amount", 0) for tx in withdrawal_txs)
+    wdr_extra_comm = sum(
+        tx.get("psp_withdrawal_extra_commission", 0) or 0 for tx in withdrawal_txs
+    )
+    wdr_total = wdr_gross + wdr_extra_comm
+
+    # Net amount = deposit net - withdrawal total
+    net_amount = round(dep_net - wdr_total, 2)
+
+    if net_amount <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Net settlement amount is ${net_amount:,.2f}. Cannot settle zero or negative amounts.",
+        )
+
+    # Determine destination treasury account
+    dest_account_id = body.destination_account_id or psp.get(
+        "settlement_destination_id"
+    )
+    if not dest_account_id:
+        raise HTTPException(status_code=400, detail="No destination account specified")
+
+    dest = await db.treasury_accounts.find_one(
+        {"account_id": dest_account_id}, {"_id": 0}
+    )
+    if not dest:
+        raise HTTPException(
+            status_code=404, detail="Destination treasury account not found"
+        )
+
+    dest_currency = dest.get("currency", "USD")
+    treasury_amount = convert_currency(net_amount, "USD", dest_currency)
+
+    now = datetime.now(timezone.utc)
+    settlement_id = f"stl_{uuid.uuid4().hex[:12]}"
+
+    if body.settlement_date:
+        settle_date = (
+            f"{body.settlement_date}T00:00:00"
+            if "T" not in body.settlement_date
+            else body.settlement_date
+        )
+    else:
+        settle_date = now.isoformat()
+
+    all_tx_ids = [tx["transaction_id"] for tx in deposit_txs] + [
+        tx["transaction_id"] for tx in withdrawal_txs
+    ]
+
+    settlement_doc = {
+        "settlement_id": settlement_id,
+        "psp_id": psp_id,
+        "psp_name": psp["psp_name"],
+        "settlement_type": "net_settlement",
+        "deposit_count": len(deposit_txs),
+        "withdrawal_count": len(withdrawal_txs),
+        "deposit_gross": round(dep_gross, 2),
+        "deposit_deductions": round(dep_total_deductions, 2),
+        "deposit_net": round(dep_net, 2),
+        "withdrawal_gross": round(wdr_gross, 2),
+        "withdrawal_extra_commission": round(wdr_extra_comm, 2),
+        "withdrawal_total": round(wdr_total, 2),
+        "gross_amount": round(dep_gross, 2),
+        "commission_amount": round(dep_commission, 2),
+        "reserve_fund_amount": round(dep_reserve, 2),
+        "extra_charges": round(dep_extra_charges + dep_extra_comm, 2),
+        "gateway_fees": round(dep_gateway, 2),
+        "total_deductions": round(dep_total_deductions + wdr_total, 2),
+        "net_amount": round(net_amount, 2),
+        "treasury_amount": round(treasury_amount, 2),
+        "treasury_currency": dest_currency,
+        "transaction_count": len(all_tx_ids),
+        "transaction_ids": all_tx_ids,
+        "settlement_destination_id": dest_account_id,
+        "settlement_destination_name": dest["account_name"],
+        "status": PSPSettlementStatus.COMPLETED,
+        "expected_settlement_date": settle_date,
+        "settlement_date": body.settlement_date or now.strftime("%Y-%m-%d"),
+        "created_at": settle_date,
+        "settled_at": settle_date,
+        "created_by": user["user_id"],
+        "created_by_name": user["name"],
+    }
+    await db.psp_settlements.insert_one(settlement_doc)
+
+    # Credit treasury with net amount
+    await db.treasury_accounts.update_one(
+        {"account_id": dest_account_id},
+        {"$inc": {"balance": treasury_amount}, "$set": {"updated_at": now.isoformat()}},
+    )
+
+    # Add treasury transaction record
+    treasury_tx_id = f"ttx_{uuid.uuid4().hex[:12]}"
+    conversion_note = (
+        f" (Converted: USD {net_amount:,.2f} -> {dest_currency} {treasury_amount:,.2f})"
+        if dest_currency != "USD"
+        else ""
+    )
+    treasury_tx = {
+        "treasury_transaction_id": treasury_tx_id,
+        "account_id": dest_account_id,
+        "account_name": dest["account_name"],
+        "transaction_type": "psp_settlement",
+        "amount": treasury_amount,
+        "currency": dest_currency,
+        "original_amount": net_amount,
+        "original_currency": "USD",
+        "reference": f"PSP Net Settlement - {settlement_id}",
+        "description": f"Net settlement ({len(deposit_txs)} deposits, {len(withdrawal_txs)} withdrawals) from {psp['psp_name']}{conversion_note}",
+        "related_settlement_id": settlement_id,
+        "psp_id": psp_id,
+        "psp_name": psp["psp_name"],
+        "created_at": settle_date,
+        "created_by": user["user_id"],
+        "created_by_name": user["name"],
+    }
+    await db.treasury_transactions.insert_one(treasury_tx)
+
+    # Mark ALL transactions as settled
+    await db.transactions.update_many(
+        {"transaction_id": {"$in": all_tx_ids}},
+        {
+            "$set": {
+                "settled": True,
+                "settlement_id": settlement_id,
+                "settlement_status": "completed",
+                "settled_at": now.isoformat(),
+                "settled_by": user["user_id"],
+                "settled_by_name": user["name"],
+                "settlement_destination_id": dest_account_id,
+                "settlement_destination_name": dest["account_name"],
+            }
+        },
+    )
+
+    # Reset PSP pending_settlement to 0 (everything is settled)
+    await db.psps.update_one(
+        {"psp_id": psp_id},
+        {
+            "$set": {"pending_settlement": 0},
+            "$inc": {"total_volume": dep_gross, "total_commission": dep_commission},
+        },
+    )
+
+    await log_activity(
+        request,
+        user,
+        "approve",
+        "psp",
+        f"Net settlement: {len(deposit_txs)} deposits + {len(withdrawal_txs)} withdrawals, net ${net_amount:,.2f}",
+    )
+
+    result = await db.psp_settlements.find_one(
+        {"settlement_id": settlement_id}, {"_id": 0}
+    )
+    return result
+
+
 
 
 # Migration endpoint: Backfill existing settled PSP transactions into psp_settlements
@@ -7445,26 +7893,26 @@ async def bulk_validate_transactions(
 async def bulk_create_transactions(
     request: Request,
     body: dict = Body(...),
-    user: dict = Depends(require_permission(Modules.TRANSACTIONS, Actions.CREATE))
+    user: dict = Depends(require_permission(Modules.TRANSACTIONS, Actions.CREATE)),
 ):
     """Create transactions from validated bulk data"""
     rows = body.get("rows", [])
     if not rows:
         raise HTTPException(status_code=400, detail="No rows to process")
-    
+
     now = datetime.now(timezone.utc)
     created = []
-    
+
     # Lookup caches for enrichment
     psp_cache = {}
     vendor_cache = {}
     treasury_cache = {}
-    
+
     for row_item in rows:
         data = row_item.get("data", {})
         if not row_item.get("valid"):
             continue
-        
+
         tx_id = f"tx_{uuid.uuid4().hex[:12]}"
         ref = data.get("reference") or f"REF{uuid.uuid4().hex[:8].upper()}"
         tx_type = data["type"]
@@ -7473,7 +7921,7 @@ async def bulk_create_transactions(
         base_amount = data.get("base_amount")
         exchange_rate = data.get("exchange_rate")
         dest_type = data.get("destination_type", "bank")
-        
+
         # Enrich PSP info
         psp_name = None
         psp_commission_rate = None
@@ -7481,7 +7929,9 @@ async def bulk_create_transactions(
         psp_net_amount = usd_amount
         if data.get("psp_id"):
             if data["psp_id"] not in psp_cache:
-                psp_cache[data["psp_id"]] = await db.psps.find_one({"psp_id": data["psp_id"]}, {"_id": 0})
+                psp_cache[data["psp_id"]] = await db.psps.find_one(
+                    {"psp_id": data["psp_id"]}, {"_id": 0}
+                )
             psp_info = psp_cache.get(data["psp_id"])
             if psp_info:
                 psp_name = psp_info["psp_name"]
@@ -7489,7 +7939,7 @@ async def bulk_create_transactions(
                 comm = psp_commission_rate / 100
                 psp_commission_amount = round(usd_amount * comm, 2)
                 psp_net_amount = usd_amount - psp_commission_amount
-        
+
         # Enrich vendor info
         vendor_name = None
         v_comm_rate = 0
@@ -7498,28 +7948,47 @@ async def bulk_create_transactions(
         v_comm_base_currency = None
         if data.get("vendor_id"):
             if data["vendor_id"] not in vendor_cache:
-                vendor_cache[data["vendor_id"]] = await db.vendors.find_one({"vendor_id": data["vendor_id"]}, {"_id": 0})
+                vendor_cache[data["vendor_id"]] = await db.vendors.find_one(
+                    {"vendor_id": data["vendor_id"]}, {"_id": 0}
+                )
             vendor_info = vendor_cache.get(data["vendor_id"])
             if vendor_info:
                 vendor_name = vendor_info["vendor_name"]
-                v_comm_rate = vendor_info.get("deposit_commission" if tx_type == "deposit" else "withdrawal_commission", 0)
+                v_comm_rate = vendor_info.get(
+                    (
+                        "deposit_commission"
+                        if tx_type == "deposit"
+                        else "withdrawal_commission"
+                    ),
+                    0,
+                )
                 if v_comm_rate > 0:
                     # USD commission
                     v_comm_amt = round(usd_amount * v_comm_rate / 100, 2)
                     # Base/payment currency commission
-                    v_base = base_amount if (currency and currency != "USD" and base_amount) else usd_amount
+                    v_base = (
+                        base_amount
+                        if (currency and currency != "USD" and base_amount)
+                        else usd_amount
+                    )
                     v_comm_base_amt = round(v_base * v_comm_rate / 100, 2)
-                    v_comm_base_currency = currency if (currency and currency != "USD") else "USD"
-        
+                    v_comm_base_currency = (
+                        currency if (currency and currency != "USD") else "USD"
+                    )
+
         # Enrich treasury info
         dest_account_name = None
         if data.get("destination_id"):
             if data["destination_id"] not in treasury_cache:
-                treasury_cache[data["destination_id"]] = await db.treasury_accounts.find_one({"account_id": data["destination_id"]}, {"_id": 0})
+                treasury_cache[data["destination_id"]] = (
+                    await db.treasury_accounts.find_one(
+                        {"account_id": data["destination_id"]}, {"_id": 0}
+                    )
+                )
             treasury_info = treasury_cache.get(data["destination_id"])
             if treasury_info:
                 dest_account_name = treasury_info["account_name"]
-        
+
         tx_doc = {
             "transaction_id": tx_id,
             "client_id": data["client_id"],
@@ -7542,16 +8011,35 @@ async def bulk_create_transactions(
             "psp_net_amount": psp_net_amount if data.get("psp_id") else None,
             "vendor_commission_rate": v_comm_rate if v_comm_rate > 0 else None,
             "vendor_commission_amount": v_comm_amt if v_comm_amt > 0 else None,
-            "vendor_commission_base_amount": v_comm_base_amt if v_comm_base_amt > 0 else None,
+            "vendor_commission_base_amount": (
+                v_comm_base_amt if v_comm_base_amt > 0 else None
+            ),
             "vendor_commission_base_currency": v_comm_base_currency,
-            "vendor_deposit_commission": vendor_info.get("deposit_commission") if (data.get("vendor_id") and vendor_cache.get(data["vendor_id"]) and tx_type == "deposit") else None,
-            "vendor_withdrawal_commission": vendor_info.get("withdrawal_commission") if (data.get("vendor_id") and vendor_cache.get(data["vendor_id"]) and tx_type == "withdrawal") else None,
+            "vendor_deposit_commission": (
+                vendor_info.get("deposit_commission")
+                if (
+                    data.get("vendor_id")
+                    and vendor_cache.get(data["vendor_id"])
+                    and tx_type == "deposit"
+                )
+                else None
+            ),
+            "vendor_withdrawal_commission": (
+                vendor_info.get("withdrawal_commission")
+                if (
+                    data.get("vendor_id")
+                    and vendor_cache.get(data["vendor_id"])
+                    and tx_type == "withdrawal"
+                )
+                else None
+            ),
             "transaction_mode": "bank",
             "status": TransactionStatus.PENDING,
             "description": data.get("description", ""),
             "reference": ref,
             "crm_reference": data.get("crm_reference") or None,
-            "transaction_date": data.get("transaction_date") or now.strftime("%Y-%m-%d"),
+            "transaction_date": data.get("transaction_date")
+            or now.strftime("%Y-%m-%d"),
             "proof_image": None,
             "created_by": user["user_id"],
             "created_by_name": user["name"],
@@ -7564,14 +8052,28 @@ async def bulk_create_transactions(
             "request_id": None,
             "bulk_upload": True,
             "created_at": now.isoformat(),
-            "processed_at": None
+            "processed_at": None,
         }
         await db.transactions.insert_one(tx_doc)
-        created.append({"transaction_id": tx_id, "reference": ref, "client_name": data.get("client_name"), "amount": usd_amount})
-    
-    await log_activity(request, user, "create", "transactions", f"Bulk created {len(created)} transactions")
-    
+        created.append(
+            {
+                "transaction_id": tx_id,
+                "reference": ref,
+                "client_name": data.get("client_name"),
+                "amount": usd_amount,
+            }
+        )
+
+    await log_activity(
+        request,
+        user,
+        "create",
+        "transactions",
+        f"Bulk created {len(created)} transactions",
+    )
+
     return {"created": len(created), "transactions": created}
+
 
 
 
@@ -8072,8 +8574,10 @@ async def _create_transaction_impl(
 
     # Update PSP pending balance if this is a PSP transaction
     if destination_type == "psp" and psp_info:
+        # Deposits add to pending_settlement (PSP owes us), withdrawals subtract
+        psp_delta = net_amount if transaction_type == "deposit" else -net_amount
         await db.psps.update_one(
-            {"psp_id": psp_id}, {"$inc": {"pending_settlement": net_amount}}
+            {"psp_id": psp_id}, {"$inc": {"pending_settlement": psp_delta}}
         )
 
     # Update vendor pending balance if this is a vendor transaction
@@ -8392,95 +8896,160 @@ async def approve_transaction(
                     detail="Source account is required for withdrawal approvals",
                 )
 
-            # Verify source account exists and has sufficient balance
-            source_account = await db.treasury_accounts.find_one(
-                {"account_id": source_account_id}, {"_id": 0}
-            )
-            if not source_account:
-                raise HTTPException(status_code=404, detail="Source account not found")
+            # Check if source is a PSP (prefixed with psp_)
+            is_psp_source = source_account_id.startswith("psp_")
 
-            # Calculate withdrawal amount in source account's currency
-            source_currency = source_account.get("currency", "USD")
-            tx_currency = tx.get("currency", "USD")
-            withdrawal_amount = tx["amount"]
+            if is_psp_source:
+                # Source is a PSP account
+                psp_id = source_account_id  # Already has psp_ prefix
+                psp_account = await db.psps.find_one({"psp_id": psp_id}, {"_id": 0})
+                if not psp_account:
+                    raise HTTPException(status_code=404, detail="PSP account not found")
 
-            # PRIORITY: Use manual base_amount if source currency matches base_currency
-            # This ensures the treasury uses the same amount the user entered (e.g., 10,000 AED)
-            if tx.get("base_currency") == source_currency and tx.get("base_amount"):
-                # Use the original base_amount from the transaction (manual entry)
-                withdrawal_amount = tx["base_amount"]
-            # Convert if currencies are different and no matching base_amount
-            elif tx_currency == "USD" and source_currency != "USD":
-                # Convert from USD to source account currency using manual exchange rate if available
-                if (
-                    tx.get("exchange_rate")
-                    and tx.get("base_amount")
-                    and tx.get("base_currency") == source_currency
-                ):
+                psp_currency = psp_account.get("currency", "USD")
+                tx_currency = tx.get("currency", "USD")
+                withdrawal_amount = tx["amount"]
+
+                # Convert currencies if needed
+                if tx.get("base_currency") == psp_currency and tx.get("base_amount"):
                     withdrawal_amount = tx["base_amount"]
-                else:
-                    withdrawal_amount = convert_from_usd(tx["amount"], source_currency)
-            elif tx_currency != "USD" and source_currency == "USD":
-                # Convert from transaction currency to USD
-                withdrawal_amount = convert_to_usd(tx["amount"], tx_currency)
-            elif tx_currency != source_currency:
-                # Convert via USD as intermediate
-                usd_amount = convert_to_usd(tx["amount"], tx_currency)
-                withdrawal_amount = convert_from_usd(usd_amount, source_currency)
+                elif tx_currency == "USD" and psp_currency != "USD":
+                    withdrawal_amount = convert_from_usd(tx["amount"], psp_currency)
+                elif tx_currency != "USD" and psp_currency == "USD":
+                    withdrawal_amount = convert_to_usd(tx["amount"], tx_currency)
+                elif tx_currency != psp_currency:
+                    usd_amount = convert_to_usd(tx["amount"], tx_currency)
+                    withdrawal_amount = convert_from_usd(usd_amount, psp_currency)
 
-            if source_account.get("balance", 0) < withdrawal_amount:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Insufficient balance in source account. Required: {withdrawal_amount:,.2f} {source_currency}, Available: {source_account.get('balance', 0):,.2f} {source_currency}",
+                withdrawal_amount = round(withdrawal_amount, 2)
+
+                psp_balance = psp_account.get("current_balance", 0)
+                if psp_balance < withdrawal_amount:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Insufficient PSP balance. Required: {withdrawal_amount:,.2f} {psp_currency}, Available: {psp_balance:,.2f} {psp_currency}",
+                    )
+
+                # Deduct from PSP balance
+                await db.psps.update_one(
+                    {"psp_id": psp_id},
+                    {
+                        "$inc": {"current_balance": -withdrawal_amount},
+                        "$set": {"updated_at": now.isoformat()},
+                    },
                 )
 
-            # Deduct from source account
-            await db.treasury_accounts.update_one(
-                {"account_id": source_account_id},
-                {
-                    "$inc": {"balance": -withdrawal_amount},
-                    "$set": {"updated_at": now.isoformat()},
-                },
-            )
+                updates["source_account_id"] = psp_id
+                updates["source_account_name"] = psp_account.get("psp_name")
+                updates["source_type"] = "psp"
+                updates["withdrawal_amount_in_source_currency"] = withdrawal_amount
+                updates["source_currency"] = psp_currency
 
-            updates["source_account_id"] = source_account_id
-            updates["source_account_name"] = source_account.get("account_name")
-            updates["withdrawal_amount_in_source_currency"] = withdrawal_amount
-            updates["source_currency"] = source_currency
+                # Record PSP transaction entry
+                treasury_tx_id = f"ttx_{uuid.uuid4().hex[:12]}"
+                treasury_tx = {
+                    "treasury_transaction_id": treasury_tx_id,
+                    "account_id": psp_id,
+                    "account_type": "psp",
+                    "transaction_type": "withdrawal",
+                    "amount": -withdrawal_amount,
+                    "currency": psp_currency,
+                    "transaction_id": transaction_id,
+                    "reference": tx.get("reference", ""),
+                    "client_name": tx.get("client_name", ""),
+                    "notes": f"Withdrawal from PSP {psp_account.get('psp_name')} for {tx.get('client_name', 'Unknown')}",
+                    "created_at": treasury_date,
+                    "created_by": user["user_id"],
+                    "created_by_name": user["name"],
+                }
+                await db.treasury_transactions.insert_one(treasury_tx)
+            else:
+                # Source is a Treasury account (existing logic)
+                source_account = await db.treasury_accounts.find_one(
+                    {"account_id": source_account_id}, {"_id": 0}
+                )
+                if not source_account:
+                    raise HTTPException(
+                        status_code=404, detail="Source account not found"
+                    )
 
-            # Record treasury transaction
-            treasury_tx_id = f"ttx_{uuid.uuid4().hex[:12]}"
-            # Determine original amount/currency - use base_amount if available (manual entry)
-            original_amt = (
-                tx.get("base_amount") if tx.get("base_amount") else tx["amount"]
-            )
-            original_curr = (
-                tx.get("base_currency") if tx.get("base_currency") else tx_currency
-            )
-            # Use manual exchange rate if provided, otherwise calculate
-            manual_rate = (
-                tx.get("exchange_rate")
-                if tx.get("exchange_rate")
-                else (withdrawal_amount / tx["amount"] if tx["amount"] > 0 else 1)
-            )
+                # Calculate withdrawal amount in source account's currency
+                source_currency = source_account.get("currency", "USD")
+                tx_currency = tx.get("currency", "USD")
+                withdrawal_amount = tx["amount"]
 
-            treasury_tx_doc = {
-                "treasury_transaction_id": treasury_tx_id,
-                "account_id": source_account_id,
-                "transaction_type": "withdrawal",
-                "amount": -withdrawal_amount,
-                "currency": source_currency,
-                "original_amount": original_amt,
-                "original_currency": original_curr,
-                "exchange_rate": manual_rate,
-                "reference": f"Withdrawal: {tx.get('client_name', 'Client')} - {tx.get('reference', '')}",
-                "transaction_id": transaction_id,
-                "client_id": tx.get("client_id"),
-                "created_at": treasury_date,
-                "created_by": user["user_id"],
-                "created_by_name": user["name"],
-            }
-            await db.treasury_transactions.insert_one(treasury_tx_doc)
+                # PRIORITY: Use manual base_amount if source currency matches base_currency
+                if tx.get("base_currency") == source_currency and tx.get("base_amount"):
+                    withdrawal_amount = tx["base_amount"]
+                elif tx_currency == "USD" and source_currency != "USD":
+                    if (
+                        tx.get("exchange_rate")
+                        and tx.get("base_amount")
+                        and tx.get("base_currency") == source_currency
+                    ):
+                        withdrawal_amount = tx["base_amount"]
+                    else:
+                        withdrawal_amount = convert_from_usd(
+                            tx["amount"], source_currency
+                        )
+                elif tx_currency != "USD" and source_currency == "USD":
+                    withdrawal_amount = convert_to_usd(tx["amount"], tx_currency)
+                elif tx_currency != source_currency:
+                    usd_amount = convert_to_usd(tx["amount"], tx_currency)
+                    withdrawal_amount = convert_from_usd(usd_amount, source_currency)
+
+                if source_account.get("balance", 0) < withdrawal_amount:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Insufficient balance in source account. Required: {withdrawal_amount:,.2f} {source_currency}, Available: {source_account.get('balance', 0):,.2f} {source_currency}",
+                    )
+
+                # Deduct from source account
+                await db.treasury_accounts.update_one(
+                    {"account_id": source_account_id},
+                    {
+                        "$inc": {"balance": -withdrawal_amount},
+                        "$set": {"updated_at": now.isoformat()},
+                    },
+                )
+
+                updates["source_account_id"] = source_account_id
+                updates["source_account_name"] = source_account.get("account_name")
+                updates["source_type"] = "treasury"
+                updates["withdrawal_amount_in_source_currency"] = withdrawal_amount
+                updates["source_currency"] = source_currency
+
+                # Record treasury transaction
+                treasury_tx_id = f"ttx_{uuid.uuid4().hex[:12]}"
+                original_amt = (
+                    tx.get("base_amount") if tx.get("base_amount") else tx["amount"]
+                )
+                original_curr = (
+                    tx.get("base_currency") if tx.get("base_currency") else tx_currency
+                )
+                manual_rate = (
+                    tx.get("exchange_rate")
+                    if tx.get("exchange_rate")
+                    else (withdrawal_amount / tx["amount"] if tx["amount"] > 0 else 1)
+                )
+
+                treasury_tx_doc = {
+                    "treasury_transaction_id": treasury_tx_id,
+                    "account_id": source_account_id,
+                    "transaction_type": "withdrawal",
+                    "amount": -withdrawal_amount,
+                    "currency": source_currency,
+                    "original_amount": original_amt,
+                    "original_currency": original_curr,
+                    "exchange_rate": manual_rate,
+                    "reference": f"Withdrawal: {tx.get('client_name', 'Client')} - {tx.get('reference', '')}",
+                    "transaction_id": transaction_id,
+                    "client_id": tx.get("client_id"),
+                    "created_at": treasury_date,
+                    "created_by": user["user_id"],
+                    "created_by_name": user["name"],
+                }
+                await db.treasury_transactions.insert_one(treasury_tx_doc)
 
         # For withdrawals with treasury destination, deduct from that treasury account
         elif tx.get("destination_type") == "treasury" and tx.get(
@@ -8565,6 +9134,49 @@ async def approve_transaction(
                 }
                 await db.treasury_transactions.insert_one(treasury_tx_doc)
 
+    # Handle PSP-destination withdrawals - deduct from PSP balance
+    if (
+        tx.get("destination_type") == "psp"
+        and tx.get("psp_id")
+        and tx["transaction_type"] == TransactionType.WITHDRAWAL
+    ):
+        psp = await db.psps.find_one({"psp_id": tx["psp_id"]}, {"_id": 0})
+        if psp:
+            withdrawal_amount = round(tx["amount"], 2)
+
+            # Deduct from PSP current_balance
+            await db.psps.update_one(
+                {"psp_id": tx["psp_id"]},
+                {
+                    "$inc": {"current_balance": -withdrawal_amount},
+                    "$set": {"updated_at": now.isoformat()},
+                },
+            )
+
+            updates["source_account_id"] = tx["psp_id"]
+            updates["source_account_name"] = psp.get("psp_name")
+            updates["source_type"] = "psp"
+            updates["withdrawal_amount_in_source_currency"] = withdrawal_amount
+            updates["source_currency"] = psp.get("currency", "USD")
+
+            # Record PSP transaction
+            treasury_tx_id = f"ttx_{uuid.uuid4().hex[:12]}"
+            psp_tx_doc = {
+                "treasury_transaction_id": treasury_tx_id,
+                "account_id": tx["psp_id"],
+                "account_type": "psp",
+                "transaction_type": "withdrawal",
+                "amount": -withdrawal_amount,
+                "currency": psp.get("currency", "USD"),
+                "reference": f"Withdrawal via PSP: {tx.get('client_name', 'Client')} - {tx.get('reference', '')}",
+                "transaction_id": transaction_id,
+                "client_id": tx.get("client_id"),
+                "created_at": treasury_date,
+                "created_by": user["user_id"],
+                "created_by_name": user["name"],
+            }
+            await db.treasury_transactions.insert_one(psp_tx_doc)
+
     # Update treasury balance for deposits going to treasury
     if (
         tx.get("destination_account_id")
@@ -8645,6 +9257,7 @@ async def approve_transaction(
     return await db.transactions.find_one(
         {"transaction_id": transaction_id}, {"_id": 0}
     )
+
 
 
 @api_router.post("/transactions/{transaction_id}/upload-proof")
@@ -11514,6 +12127,126 @@ async def update_loan(request: Request, loan_id: str, update_data: LoanUpdate, u
 
     return updated
 
+
+
+@api_router.post("/loans/{loan_id}/attachments")
+async def upload_loan_attachments(
+    request: Request,
+    loan_id: str,
+    files: list[UploadFile] = File(...),
+    user: dict = Depends(require_permission(Modules.LOANS, Actions.EDIT)),
+):
+    """Upload attachments (xlsx, pdf, images) to a loan"""
+    loan = await db.loans.find_one({"loan_id": loan_id}, {"_id": 0})
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    ALLOWED_EXTENSIONS = {
+        "pdf",
+        "xlsx",
+        "xls",
+        "csv",
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "webp",
+    }
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+    uploaded = []
+    now = datetime.now(timezone.utc).isoformat()
+
+    for file in files:
+        ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+        if ext not in ALLOWED_EXTENSIONS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File type .{ext} not allowed. Allowed: {', '.join(ALLOWED_EXTENSIONS)}",
+            )
+
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=400, detail=f"File {file.filename} exceeds 10MB limit"
+            )
+
+        url = upload_to_r2(
+            content,
+            file.filename,
+            file.content_type or "application/octet-stream",
+            folder=f"loans/{loan_id}",
+        )
+
+        attachment = {
+            "attachment_id": f"att_{uuid.uuid4().hex[:10]}",
+            "filename": file.filename,
+            "url": url,
+            "file_type": ext,
+            "size": len(content),
+            "uploaded_at": now,
+            "uploaded_by": user["user_id"],
+            "uploaded_by_name": user["name"],
+        }
+        uploaded.append(attachment)
+
+    await db.loans.update_one(
+        {"loan_id": loan_id}, {"$push": {"attachments": {"$each": uploaded}}}
+    )
+
+    # Also log in loan_transactions
+    await db.loan_transactions.insert_one(
+        {
+            "transaction_id": f"ltx_{uuid.uuid4().hex[:12]}",
+            "loan_id": loan_id,
+            "transaction_type": "attachment",
+            "description": f"Uploaded {len(uploaded)} file(s): {', '.join(f.filename for f in files)}",
+            "amount": 0,
+            "amount_usd": 0,
+            "currency": loan.get("currency", "USD"),
+            "status": "completed",
+            "attachments": uploaded,
+            "created_at": now,
+            "created_by": user["user_id"],
+            "created_by_name": user["name"],
+        }
+    )
+
+    await log_activity(
+        request,
+        user,
+        "edit",
+        "loans",
+        f"Uploaded {len(uploaded)} attachment(s) to loan {loan_id}",
+    )
+    return {"message": f"{len(uploaded)} file(s) uploaded", "attachments": uploaded}
+
+
+@api_router.delete("/loans/{loan_id}/attachments/{attachment_id}")
+async def delete_loan_attachment(
+    request: Request,
+    loan_id: str,
+    attachment_id: str,
+    user: dict = Depends(require_permission(Modules.LOANS, Actions.EDIT)),
+):
+    """Delete an attachment from a loan"""
+    loan = await db.loans.find_one({"loan_id": loan_id}, {"_id": 0})
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    await db.loans.update_one(
+        {"loan_id": loan_id},
+        {"$pull": {"attachments": {"attachment_id": attachment_id}}},
+    )
+    await log_activity(
+        request, user, "delete", "loans", f"Removed attachment from loan {loan_id}"
+    )
+    return {"message": "Attachment removed"}
+
+
+
+
+
 @api_router.post("/loans/{loan_id}/repayment")
 async def record_loan_repayment(request: Request, loan_id: str, repayment: LoanRepaymentCreate, user: dict = Depends(require_permission(Modules.LOANS, Actions.CREATE))):
 
@@ -11837,167 +12570,274 @@ async def get_loans_summary(user: dict = Depends(require_permission(Modules.LOAN
     }
 
 @api_router.get("/loans/export/csv")
-async def export_loans_csv(user: dict = Depends(require_permission(Modules.LOANS, Actions.EXPORT))):
+async def export_loans_csv(
+    user: dict = Depends(require_permission(Modules.LOANS, Actions.EXPORT))
+):
     """Export all loans as CSV"""
     from io import StringIO
     import csv
-    
+
     loans = await db.loans.find({}, {"_id": 0}).sort("loan_date", -1).to_list(50000)
-    
+
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "Loan ID", "Borrower", "Amount", "Currency", "Interest Rate (%)",
-        "Loan Date", "Due Date", "Outstanding Balance", "Total Repaid",
-        "Status", "Repayment Mode", "Notes", "Created At"
-    ])
-    
+    writer.writerow(
+        [
+            "Loan ID",
+            "Borrower",
+            "Amount",
+            "Currency",
+            "Interest Rate (%)",
+            "Loan Date",
+            "Due Date",
+            "Outstanding Balance",
+            "Total Repaid",
+            "Status",
+            "Repayment Mode",
+            "Notes",
+            "Created At",
+        ]
+    )
+
     for loan in loans:
-        writer.writerow([
-            loan.get("loan_id", ""),
-            loan.get("borrower_name", ""),
-            loan.get("amount", 0),
-            loan.get("currency", "USD"),
-            loan.get("interest_rate", 0),
-            loan.get("loan_date", ""),
-            loan.get("due_date", ""),
-            loan.get("outstanding_balance", 0),
-            loan.get("total_repaid", 0),
-            loan.get("status", ""),
-            loan.get("repayment_mode", ""),
-            loan.get("notes", ""),
-            loan.get("created_at", "")
-        ])
-    
+        outstanding = (
+            loan.get("amount", 0)
+            + loan.get("total_interest", 0)
+            - loan.get("total_repaid", 0)
+        )
+        writer.writerow(
+            [
+                loan.get("loan_id", ""),
+                loan.get("borrower_name", ""),
+                loan.get("amount", 0),
+                loan.get("currency", "USD"),
+                loan.get("interest_rate", 0),
+                loan.get("loan_date", ""),
+                loan.get("due_date", ""),
+                outstanding,
+                loan.get("total_repaid", 0),
+                loan.get("status", ""),
+                loan.get("repayment_mode", ""),
+                loan.get("notes", ""),
+                loan.get("created_at", ""),
+            ]
+        )
+
     from fastapi.responses import StreamingResponse
+
     output.seek(0)
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=loans_export.csv"}
+        headers={"Content-Disposition": "attachment; filename=loans_export.csv"},
     )
 
 
+
 @api_router.get("/loans/export/excel")
-async def export_loans_excel(user: dict = Depends(require_permission(Modules.LOANS, Actions.EXPORT))):
+async def export_loans_excel(
+    user: dict = Depends(require_permission(Modules.LOANS, Actions.EXPORT))
+):
     """Export all loans as Excel"""
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from io import BytesIO
-    
+
     loans = await db.loans.find({}, {"_id": 0}).sort("loan_date", -1).to_list(50000)
-    
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Loans"
-    
+
     # Header styling
     header_font = Font(bold=True, color="FFFFFF")
-    header_fill = PatternFill(start_color="0B3D91", end_color="0B3D91", fill_type="solid")
-    thin_border = Border(
-        left=Side(style='thin'), right=Side(style='thin'),
-        top=Side(style='thin'), bottom=Side(style='thin')
+    header_fill = PatternFill(
+        start_color="0B3D91", end_color="0B3D91", fill_type="solid"
     )
-    
-    headers = ["Loan ID", "Borrower", "Amount", "Currency", "Interest Rate (%)",
-               "Loan Date", "Due Date", "Outstanding", "Total Repaid", "Status"]
-    
+    thin_border = Border(
+        left=Side(style="thin"),
+        right=Side(style="thin"),
+        top=Side(style="thin"),
+        bottom=Side(style="thin"),
+    )
+
+    headers = [
+        "Loan ID",
+        "Borrower",
+        "Amount",
+        "Currency",
+        "Interest Rate (%)",
+        "Loan Date",
+        "Due Date",
+        "Outstanding",
+        "Total Repaid",
+        "Status",
+    ]
+
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
         cell.font = header_font
         cell.fill = header_fill
-        cell.alignment = Alignment(horizontal='center')
+        cell.alignment = Alignment(horizontal="center")
         cell.border = thin_border
-    
+
     for row, loan in enumerate(loans, 2):
+        outstanding = (
+            loan.get("amount", 0)
+            + loan.get("total_interest", 0)
+            - loan.get("total_repaid", 0)
+        )
         ws.cell(row=row, column=1, value=loan.get("loan_id", "")).border = thin_border
-        ws.cell(row=row, column=2, value=loan.get("borrower_name", "")).border = thin_border
+        ws.cell(row=row, column=2, value=loan.get("borrower_name", "")).border = (
+            thin_border
+        )
         ws.cell(row=row, column=3, value=loan.get("amount", 0)).border = thin_border
-        ws.cell(row=row, column=4, value=loan.get("currency", "USD")).border = thin_border
-        ws.cell(row=row, column=5, value=loan.get("interest_rate", 0)).border = thin_border
-        ws.cell(row=row, column=6, value=str(loan.get("loan_date", ""))).border = thin_border
-        ws.cell(row=row, column=7, value=str(loan.get("due_date", ""))).border = thin_border
-        ws.cell(row=row, column=8, value=loan.get("outstanding_balance", 0)).border = thin_border
-        ws.cell(row=row, column=9, value=loan.get("total_repaid", 0)).border = thin_border
+        ws.cell(row=row, column=4, value=loan.get("currency", "USD")).border = (
+            thin_border
+        )
+        ws.cell(row=row, column=5, value=loan.get("interest_rate", 0)).border = (
+            thin_border
+        )
+        ws.cell(row=row, column=6, value=str(loan.get("loan_date", ""))).border = (
+            thin_border
+        )
+        ws.cell(row=row, column=7, value=str(loan.get("due_date", ""))).border = (
+            thin_border
+        )
+        ws.cell(row=row, column=8, value=outstanding).border = thin_border
+        ws.cell(row=row, column=9, value=loan.get("total_repaid", 0)).border = (
+            thin_border
+        )
         ws.cell(row=row, column=10, value=loan.get("status", "")).border = thin_border
-    
+
     # Auto-adjust column widths
     for col in ws.columns:
         max_length = max(len(str(cell.value or "")) for cell in col)
         ws.column_dimensions[col[0].column_letter].width = min(max_length + 2, 30)
-    
+
     output = BytesIO()
     wb.save(output)
     output.seek(0)
-    
+
     from fastapi.responses import StreamingResponse
+
     return StreamingResponse(
         iter([output.getvalue()]),
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": "attachment; filename=loans_export.xlsx"}
+        headers={"Content-Disposition": "attachment; filename=loans_export.xlsx"},
     )
 
 
 @api_router.get("/loans/export/pdf")
-async def export_loans_pdf(user: dict = Depends(require_permission(Modules.LOANS, Actions.EXPORT))):
+async def export_loans_pdf(
+    user: dict = Depends(require_permission(Modules.LOANS, Actions.EXPORT))
+):
     """Export all loans as PDF"""
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Table,
+        TableStyle,
+        Paragraph,
+        Spacer,
+    )
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from io import BytesIO
-    
+
     loans = await db.loans.find({}, {"_id": 0}).sort("loan_date", -1).to_list(50000)
-    
+
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
-    
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        rightMargin=30,
+        leftMargin=30,
+        topMargin=30,
+        bottomMargin=30,
+    )
+
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=18, alignment=1, spaceAfter=20)
-    
+    title_style = ParagraphStyle(
+        "Title", parent=styles["Heading1"], fontSize=18, alignment=1, spaceAfter=20
+    )
+
     elements = []
     elements.append(Paragraph("Loans Report", title_style))
-    elements.append(Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles['Normal']))
+    elements.append(
+        Paragraph(
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}", styles["Normal"]
+        )
+    )
     elements.append(Spacer(1, 20))
-    
+
     # Table data
-    data = [["Loan ID", "Borrower", "Amount", "Currency", "Interest", "Due Date", "Outstanding", "Status"]]
+    data = [
+        [
+            "Loan ID",
+            "Borrower",
+            "Amount",
+            "Currency",
+            "Interest",
+            "Due Date",
+            "Outstanding",
+            "Status",
+        ]
+    ]
     for loan in loans:
-        data.append([
-            loan.get("loan_id", "")[:12],
-            loan.get("borrower_name", "")[:20],
-            f"${loan.get('amount', 0):,.2f}",
-            loan.get("currency", "USD"),
-            f"{loan.get('interest_rate', 0)}%",
-            str(loan.get("due_date", ""))[:10],
-            f"${loan.get('outstanding_balance', 0):,.2f}",
-            loan.get("status", "").replace("_", " ").title()
-        ])
-    
+        outstanding = (
+            loan.get("amount", 0)
+            + loan.get("total_interest", 0)
+            - loan.get("total_repaid", 0)
+        )
+        data.append(
+            [
+                loan.get("loan_id", "")[:12],
+                loan.get("borrower_name", "")[:20],
+                f"${loan.get('amount', 0):,.2f}",
+                loan.get("currency", "USD"),
+                f"{loan.get('interest_rate', 0)}%",
+                str(loan.get("due_date", ""))[:10],
+                f"${outstanding:,.2f}",
+                loan.get("status", "").replace("_", " ").title(),
+            ]
+        )
+
     table = Table(data, repeatRows=1)
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0B3D91')),
-        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 9),
-        ('FONTSIZE', (0, 1), (-1, -1), 8),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.white),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')]),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0B3D91")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("FONTSIZE", (0, 1), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#f5f5f5")],
+                ),
+            ]
+        )
+    )
     elements.append(table)
-    
+
     doc.build(elements)
     buffer.seek(0)
-    
+
     from fastapi.responses import StreamingResponse
+
     return StreamingResponse(
         iter([buffer.getvalue()]),
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=loans_export.pdf"}
+        headers={"Content-Disposition": "attachment; filename=loans_export.pdf"},
     )
+
 
 # ============== DEBT MANAGEMENT ==============
 
