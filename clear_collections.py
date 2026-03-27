@@ -16,10 +16,28 @@ MONGO_URL = os.environ["MONGO_URL"]
 DB_NAME = os.environ["DB_NAME"]
 
 COLLECTIONS_TO_CLEAR = [
+    "email_logs",
+    "ie_categories",
+    "client_bank_accounts",
+    "otp_codes",
+    "income_expense_entries",
+    "app_settings",
+    "psp_settlements",
     "transaction_requests",
+    "impersonation_logs",
+    "treasury_transactions",
+    "reconciliations",
+    "treasury_accounts",
+    "audit_logs",
+    "loan_transactions",
     "transactions",
-    "treasury_transactions"
-
+    "password_resets",
+    "activity_log",
+    "system_logs",
+    "vendor_settlements",
+    "income_expenses",
+    "vendors",
+    "psps"
 ]
 
 
@@ -30,8 +48,13 @@ def main():
     print(f"\nConnected to database: {DB_NAME}")
     print("\nCollections to be cleared:")
     for col in COLLECTIONS_TO_CLEAR:
-        count = db[col].count_documents({})
-        print(f"  - {col}: {count} documents")
+        # if col == "treasury_transactions":
+        #     count = db[col].count_documents({"reference": {"$ne": "REFFCFF8F47"}})
+        #     kept = db[col].count_documents({"reference": "REFFCFF8F47"})
+        #     print(f"  - {col}: {count} documents will be deleted (keeping {kept} with reference REFFCFF8F47)")
+        # else:
+            count = db[col].count_documents({})
+            print(f"  - {col}: {count} documents")
 
     print(
         "\n⚠️  WARNING: This will permanently delete all documents in the above collections!"
@@ -44,16 +67,17 @@ def main():
 
     print("\nClearing collections...")
     for col in COLLECTIONS_TO_CLEAR:
-        result = db[col].delete_many({})
-        print(f"  ✓ {col}: deleted {result.deleted_count} documents")
+        # if col == "transactions":
+        #     query = {"reference": {"$ne": "REFFCFF8F47"}}
+        #     result = db[col].delete_many(query)
+        #     kept = db[col].count_documents({"reference": "REFFCFF8F47"})
+        #     print(f"  ✓ {col}: deleted {result.deleted_count} documents (kept {kept} with reference REFFCFF8F47)")
+        # else:
+            result = db[col].delete_many({})
+            print(f"  ✓ {col}: deleted {result.deleted_count} documents")
 
     print("\nDone! All specified collections have been cleared.")
     client.close()
-
-
-# if __name__ == "__main__":
-#     main()
-#     # clear_all_collections()
 
 
 
@@ -80,164 +104,73 @@ def clear_all_collections():
         print("Aborted. No collections were cleared.")
         return
 
-    print("\nClearing collections...")
-    for col in db.list_collection_names():
-        result = db[col].delete_many({})
-        print(f"  ✓ {col}: deleted {result.deleted_count} documents")
+    # print("\nClearing collections...")
+    # for col in db.list_collection_names():
+    #     result = db[col].delete_many({})
+    #     print(f"  ✓ {col}: deleted {result.deleted_count} documents")
 
     print("\nDone! All specified collections have been cleared.")
     client.close()
 
 
-"""
-Script to clear specific MongoDB collections.
-Reads MONGO_URL and DB_NAME from the .env file in the same directory.
-"""
+# def delete_by_crm_reference_id(crm_reference_id, collection_name="transaction_requests"):
+#     """
+#     Delete transaction(s) from a collection by crm_reference_id.
 
-import os
-from pathlib import Path
-from dotenv import load_dotenv
-from pymongo import MongoClient
+#     Args:
+#         crm_reference_id: The CRM reference ID to search for (e.g. 5809117)
+#         collection_name: The collection to delete from (default: transaction_requests)
+#     """
+#     client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
+#     db = client[DB_NAME]
+#     collection = db[collection_name]
 
-# Load .env from same directory as this script
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / ".env")
+#     # Try both int and string versions to be safe
+#     query = {
+#         "$or": [
+#             {"crm_reference_id": crm_reference_id},
+#             {"crm_reference_id": str(crm_reference_id)}
+#         ]
+#     }
 
-MONGO_URL = os.environ["MONGO_URL"]
-DB_NAME = os.environ["DB_NAME"]
+#     # First, preview matching documents
+#     matches = list(collection.find(query))
 
-COLLECTIONS_TO_CLEAR = [
-    "transaction_requests"
+#     if not matches:
+#         print(f"\n❌ No documents found with crm_reference_id = {crm_reference_id}")
+#         client.close()
+#         return
 
-]
+#     print(f"\nFound {len(matches)} document(s) with crm_reference_id = {crm_reference_id}:")
+#     for doc in matches:
+#         print(f"  - _id: {doc['_id']} | crm_reference_id: {doc.get('crm_reference_id')}")
 
+#     print("\n⚠️  WARNING: This will permanently delete the above document(s)!")
+#     confirm = input("\nType 'YES' to confirm and proceed: ").strip()
 
-def main():
-    client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
-    db = client[DB_NAME]
+#     if confirm != "YES":
+#         print("Aborted. No documents were deleted.")
+#         client.close()
+#         return
 
-    print(f"\nConnected to database: {DB_NAME}")
-    print("\nCollections to be cleared:")
-    for col in COLLECTIONS_TO_CLEAR:
-        count = db[col].count_documents({})
-        print(f"  - {col}: {count} documents")
+#     result = collection.delete_many(query)
+#     print(f"\n✓ Deleted {result.deleted_count} document(s) with crm_reference_id = {crm_reference_id}")
 
-    print(
-        "\n⚠️  WARNING: This will permanently delete all documents in the above collections!"
-    )
-    confirm = input("\nType 'YES' to confirm and proceed: ").strip()
-
-    if confirm != "YES":
-        print("Aborted. No collections were cleared.")
-        return
-
-    print("\nClearing collections...")
-    for col in COLLECTIONS_TO_CLEAR:
-        result = db[col].delete_many({})
-        print(f"  ✓ {col}: deleted {result.deleted_count} documents")
-
-    print("\nDone! All specified collections have been cleared.")
-    client.close()
-
-
-# if __name__ == "__main__":
-#     main()
-#     # clear_all_collections()
-
-
-
-
-
-# write a function to clear all collections in the database
-
-def clear_all_collections():
-    client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
-    db = client[DB_NAME]
-
-    print(f"\nConnected to database: {DB_NAME}")
-    print("\nCollections to be cleared:")
-    for col in db.list_collection_names():
-        count = db[col].count_documents({})
-        print(f"  - {col}: {count} documents")
-
-    print(
-        "\n⚠️  WARNING: This will permanently delete all documents in the above collections!"
-    )
-    confirm = input("\nType 'YES' to confirm and proceed: ").strip()
-
-    if confirm != "YES":
-        print("Aborted. No collections were cleared.")
-        return
-
-    print("\nClearing collections...")
-    for col in db.list_collection_names():
-        result = db[col].delete_many({})
-        print(f"  ✓ {col}: deleted {result.deleted_count} documents")
-
-    print("\nDone! All specified collections have been cleared.")
-    client.close()
-
-
-async def delete_by_crm_reference_id(crm_reference_id, collection_name="transaction"):
-    """
-    Delete transaction(s) from a collection by crm_reference_id.
-    
-    Args:
-        crm_reference: The CRM reference ID to search for (e.g. 5809117)
-        collection_name: The collection to delete from (default: transaction)
-    """
-    client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
-    db = client[DB_NAME]
-    collection = db[collection_name]
-
-    # Try both int and string versions to be safe
-    query = {
-        "$or": [
-            {"crm_reference": crm_reference_id},
-            {"crm_reference": str(crm_reference_id)}
-        ]
-    }
-
-    # First, preview matching documents
-    matches = list(collection.find(query))
-    doc= await db.transactions.find_one(query)
-    print(doc)
-    if not matches:
-        print(f"\n❌ No documents found with crm_reference_id = {crm_reference_id}")
-        client.close()
-        return
-
-    print(f"\nFound {len(matches)} document(s) with crm_reference_id = {crm_reference_id}:")
-    for doc in matches:
-        print(f"  - _id: {doc['_id']} | crm_reference_id: {doc.get('crm_reference_id')}")
-
-    print("\n⚠️  WARNING: This will permanently delete the above document(s)!")
-    confirm = input("\nType 'YES' to confirm and proceed: ").strip()
-
-    if confirm != "YES":
-        print("Aborted. No documents were deleted.")
-        client.close()
-        return
-
-    result = collection.delete_many(query)
-    print(f"\n✓ Deleted {result.deleted_count} document(s) with crm_reference_id = {crm_reference_id}")
-
-    client.close()
-
-
-# ── Entry point ─────────────────────────────────────────────────────────────
-# delete_by_crm_reference_id(5809117)
-
-
+#     client.close()
 
 
 client = MongoClient(MONGO_URL, serverSelectionTimeoutMS=5000)
-db = client[DB_NAME]
-# collection = db["transactions"]
-result= db.treasury_accounts.update_one(
-        {"account_id": "treasury_dff9b532e16e"}, {"$set": {"balance": 23406}}
-    )
-print(result)
-# result = db.transaction_requests.delete_many({"request_id": "txreq_e60a8b45c4bd"})
-# print(f"Deleted {result.deleted_count} document(s)")
+# db = client[DB_NAME]
+# # collection = db["transactions"]
+# result= db.treasury_accounts.update_one(
+#         {"account_id": "treasury_dff9b532e16e"}, {"$set": {"balance": 344667.32}}
+#     )
+# print(result)
+
+
+if __name__ == "__main__":
+    main()
+    # clear_all_collections()
+
+# ── Entry point ─────────────────────────────────────────────────────────────
 
