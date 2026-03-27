@@ -17991,7 +17991,7 @@ async def generate_monthly_report_html(year: int = None, month: int = None):
     
     # --- Treasury Balances (end of month snapshot) ---
     treasury_accounts = await db.treasury_accounts.find({}, {"_id": 0}).to_list(100)
-    total_treasury = sum(convert_to_usd(a.get("balance", 0), a.get("currency", "USD"))
+    total_treasury = sum(convert_to_usd(a.get("balance", 0), a.get("currency", "USD")) for a in treasury_accounts)
     treasury_rows = ""
     for acc in sorted(treasury_accounts, key=lambda x: -abs(x.get("balance", 0))):
         bal = acc.get("balance", 0)
