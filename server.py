@@ -5783,158 +5783,222 @@ async def get_vendors(
     
     return response
 
+
 @api_router.get("/vendors/{vendor_id}")
-async def get_vendor(vendor_id: str, user: dict = Depends(require_permission(Modules.EXCHANGERS, Actions.VIEW))):
+async def get_vendor(
+    vendor_id: str,
+    user: dict = Depends(require_permission(Modules.EXCHANGERS, Actions.VIEW)),
+):
     vendor = await db.vendors.find_one({"vendor_id": vendor_id}, {"_id": 0})
     if not vendor:
         raise HTTPException(status_code=404, detail="Vendor not found")
-    
+
     # Calculate settlement balance by currency (unsettled approved/completed transactions)
     # Settlement = (Money In - Money Out - Commission)
     # Money In = deposits + income + loan repayments TO vendor
     # Money Out = withdrawals + expense + loan disbursements FROM vendor
     settlement_pipeline = [
-        {"$match": {
-            "vendor_id": vendor_id,
-            "status": {"$in": ["approved", "completed"]},
-            "settled": {"$ne": True}
-        }},
-        {"$group": {
-            "_id": {"$ifNull": ["$base_currency", "$currency"]},
-            "deposit_amount": {
-                "$sum": {
-                    "$cond": [
-                        {"$eq": ["$transaction_type", "deposit"]},
-                        {"$ifNull": ["$base_amount", "$amount"]},
-                        0
-                    ]
-                }
-            },
-            "withdrawal_amount": {
-                "$sum": {
-                    "$cond": [
-                        {"$eq": ["$transaction_type", "withdrawal"]},
-                        {"$ifNull": ["$base_amount", "$amount"]},
-                        0
-                    ]
-                }
-            },
-            "deposit_usd": {
-                "$sum": {
-                    "$cond": [
-                        {"$eq": ["$transaction_type", "deposit"]},
-                        "$amount",
-                        0
-                    ]
-                }
-            },
-            "withdrawal_usd": {
-                "$sum": {
-                    "$cond": [
-                        {"$eq": ["$transaction_type", "withdrawal"]},
-                        "$amount",
-                        0
-                    ]
-                }
-            },
-            "deposit_count": {
-                "$sum": {"$cond": [{"$eq": ["$transaction_type", "deposit"]}, 1, 0]}
-            },
-            "withdrawal_count": {
-                "$sum": {"$cond": [{"$eq": ["$transaction_type", "withdrawal"]}, 1, 0]}
-            },
-            "total_commission_usd": {"$sum": {"$ifNull": ["$vendor_commission_amount", 0]}},
-            "total_commission_base": {"$sum": {"$ifNull": ["$vendor_commission_base_amount", 0]}}
-        }}
+        {
+            "$match": {
+                "vendor_id": vendor_id,
+                "status": {"$in": ["approved", "completed"]},
+                "settled": {"$ne": True},
+            }
+        },
+        {
+            "$group": {
+                "_id": {"$ifNull": ["$base_currency", "$currency"]},
+                "deposit_amount": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$transaction_type", "deposit"]},
+                            {"$ifNull": ["$base_amount", "$amount"]},
+                            0,
+                        ]
+                    }
+                },
+                "withdrawal_amount": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$transaction_type", "withdrawal"]},
+                            {"$ifNull": ["$base_amount", "$amount"]},
+                            0,
+                        ]
+                    }
+                },
+                "deposit_usd": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$transaction_type", "deposit"]},
+                            "$amount",
+                            0,
+                        ]
+                    }
+                },
+                "withdrawal_usd": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$transaction_type", "withdrawal"]},
+                            "$amount",
+                            0,
+                        ]
+                    }
+                },
+                "deposit_count": {
+                    "$sum": {"$cond": [{"$eq": ["$transaction_type", "deposit"]}, 1, 0]}
+                },
+                "withdrawal_count": {
+                    "$sum": {
+                        "$cond": [{"$eq": ["$transaction_type", "withdrawal"]}, 1, 0]
+                    }
+                },
+                "total_commission_usd": {
+                    "$sum": {"$ifNull": ["$vendor_commission_amount", 0]}
+                },
+                "total_commission_base": {
+                    "$sum": {"$ifNull": ["$vendor_commission_base_amount", 0]}
+                },
+            }
+        },
     ]
-    
-    settlement_by_currency = await db.transactions.aggregate(settlement_pipeline).to_list(100)
-    
+
+    settlement_by_currency = await db.transactions.aggregate(
+        settlement_pipeline
+    ).to_list(100)
+
     # Fetch loan transactions involving this vendor (disbursements FROM vendor and repayments TO vendor)
     # Disbursements from vendor = Money OUT (like withdrawals)
     # Repayments to vendor = Money IN (like deposits)
     loan_tx_pipeline = [
-        {"$match": {
-            "$or": [
-                {"source_vendor_id": vendor_id},  # Disbursements from this vendor
-                {"credit_to_vendor_id": vendor_id}  # Repayments to this vendor
-            ],
-            "status": "completed",
-            "settled": {"$ne": True}
-        }},
-        {"$group": {
-            "_id": "$currency",
-            # Loan repayments TO vendor = Money IN
-            "loan_in_amount": {
-                "$sum": {
-                    "$cond": [
-                        {"$eq": ["$credit_to_vendor_id", vendor_id]},
-                        "$amount",
-                        0
-                    ]
-                }
-            },
-            # Loan disbursements FROM vendor = Money OUT
-            "loan_out_amount": {
-                "$sum": {
-                    "$cond": [
-                        {"$eq": ["$source_vendor_id", vendor_id]},
-                        "$amount",
-                        0
-                    ]
-                }
-            },
-            "loan_in_count": {
-                "$sum": {"$cond": [{"$eq": ["$credit_to_vendor_id", vendor_id]}, 1, 0]}
-            },
-            "loan_out_count": {
-                "$sum": {"$cond": [{"$eq": ["$source_vendor_id", vendor_id]}, 1, 0]}
-            },
-            # Loan commission (in transaction currency)
-            "loan_commission_amount": {"$sum": {"$ifNull": ["$vendor_commission_amount", 0]}},
-            "loan_commission_base": {"$sum": {"$ifNull": ["$vendor_commission_base_amount", 0]}}
-        }}
+        {
+            "$match": {
+                "$or": [
+                    {"source_vendor_id": vendor_id},  # Disbursements from this vendor
+                    {"credit_to_vendor_id": vendor_id},  # Repayments to this vendor
+                ],
+                "status": "completed",
+                "settled": {"$ne": True},
+            }
+        },
+        {
+            "$group": {
+                "_id": "$currency",
+                # Loan repayments TO vendor = Money IN
+                "loan_in_amount": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$credit_to_vendor_id", vendor_id]},
+                            "$amount",
+                            0,
+                        ]
+                    }
+                },
+                # Loan disbursements FROM vendor = Money OUT
+                "loan_out_amount": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$source_vendor_id", vendor_id]},
+                            "$amount",
+                            0,
+                        ]
+                    }
+                },
+                "loan_in_count": {
+                    "$sum": {
+                        "$cond": [{"$eq": ["$credit_to_vendor_id", vendor_id]}, 1, 0]
+                    }
+                },
+                "loan_out_count": {
+                    "$sum": {"$cond": [{"$eq": ["$source_vendor_id", vendor_id]}, 1, 0]}
+                },
+                # Loan commission (in transaction currency)
+                "loan_commission_amount": {
+                    "$sum": {"$ifNull": ["$vendor_commission_amount", 0]}
+                },
+                "loan_commission_base": {
+                    "$sum": {"$ifNull": ["$vendor_commission_base_amount", 0]}
+                },
+            }
+        },
     ]
-    loan_tx_by_currency = await db.loan_transactions.aggregate(loan_tx_pipeline).to_list(100)
+    loan_tx_by_currency = await db.loan_transactions.aggregate(
+        loan_tx_pipeline
+    ).to_list(100)
     loan_tx_map = {item["_id"] or "USD": item for item in loan_tx_by_currency}
-    
+
     # Also fetch completed income/expense entries for this vendor
     # IMPORTANT: Exclude converted_to_loan entries - they're tracked under Loans, not as settlement
     # Group by base_currency (payment currency) - this is what the exchanger actually handles
     ie_pipeline = [
-        {"$match": {
-            "vendor_id": vendor_id,
-            "status": "completed",
-            "converted_to_loan": {"$ne": True},  # Exclude converted entries to prevent double-counting
-            "settled": {"$ne": True}
-        }},
-        {"$group": {
-            "_id": {"$ifNull": ["$base_currency", "$currency"]},  # Group by payment currency
-            "income_base": {
-                "$sum": {"$cond": [{"$eq": ["$entry_type", "income"]}, {"$ifNull": ["$base_amount", "$amount"]}, 0]}
-            },
-            "expense_base": {
-                "$sum": {"$cond": [{"$eq": ["$entry_type", "expense"]}, {"$ifNull": ["$base_amount", "$amount"]}, 0]}
-            },
-            "income_usd": {
-                "$sum": {"$cond": [{"$eq": ["$entry_type", "income"]}, {"$ifNull": ["$amount_usd", "$amount"]}, 0]}
-            },
-            "expense_usd": {
-                "$sum": {"$cond": [{"$eq": ["$entry_type", "expense"]}, {"$ifNull": ["$amount_usd", "$amount"]}, 0]}
-            },
-            "income_count": {
-                "$sum": {"$cond": [{"$eq": ["$entry_type", "income"]}, 1, 0]}
-            },
-            "expense_count": {
-                "$sum": {"$cond": [{"$eq": ["$entry_type", "expense"]}, 1, 0]}
-            },
-            "ie_commission_usd": {"$sum": {"$ifNull": ["$vendor_commission_amount", 0]}},
-            "ie_commission_base": {"$sum": {"$ifNull": ["$vendor_commission_base_amount", 0]}}
-        }}
+        {
+            "$match": {
+                "vendor_id": vendor_id,
+                "status": "completed",
+                "converted_to_loan": {
+                    "$ne": True
+                },  # Exclude converted entries to prevent double-counting
+                "settled": {"$ne": True},
+            }
+        },
+        {
+            "$group": {
+                "_id": {
+                    "$ifNull": ["$base_currency", "$currency"]
+                },  # Group by payment currency
+                "income_base": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$entry_type", "income"]},
+                            {"$ifNull": ["$base_amount", "$amount"]},
+                            0,
+                        ]
+                    }
+                },
+                "expense_base": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$entry_type", "expense"]},
+                            {"$ifNull": ["$base_amount", "$amount"]},
+                            0,
+                        ]
+                    }
+                },
+                "income_usd": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$entry_type", "income"]},
+                            {"$ifNull": ["$amount_usd", "$amount"]},
+                            0,
+                        ]
+                    }
+                },
+                "expense_usd": {
+                    "$sum": {
+                        "$cond": [
+                            {"$eq": ["$entry_type", "expense"]},
+                            {"$ifNull": ["$amount_usd", "$amount"]},
+                            0,
+                        ]
+                    }
+                },
+                "income_count": {
+                    "$sum": {"$cond": [{"$eq": ["$entry_type", "income"]}, 1, 0]}
+                },
+                "expense_count": {
+                    "$sum": {"$cond": [{"$eq": ["$entry_type", "expense"]}, 1, 0]}
+                },
+                "ie_commission_usd": {
+                    "$sum": {"$ifNull": ["$vendor_commission_amount", 0]}
+                },
+                "ie_commission_base": {
+                    "$sum": {"$ifNull": ["$vendor_commission_base_amount", 0]}
+                },
+            }
+        },
     ]
     ie_by_currency = await db.income_expenses.aggregate(ie_pipeline).to_list(100)
     ie_map = {item["_id"] or "USD": item for item in ie_by_currency}
-    
+
     # Merge transactions and IE data into settlement_by_currency
     currency_data = {}
     for item in settlement_by_currency:
@@ -5948,27 +6012,51 @@ async def get_vendor(vendor_id: str, user: dict = Depends(require_permission(Mod
             "tx_withdrawal_count": item["withdrawal_count"],
             "tx_commission_usd": item["total_commission_usd"],
             "tx_commission_base": item["total_commission_base"],
-            "ie_in": 0, "ie_out": 0, "ie_in_usd": 0, "ie_out_usd": 0,
-            "ie_in_count": 0, "ie_out_count": 0,
-            "ie_commission_usd": 0, "ie_commission_base": 0,
-            "loan_in": 0, "loan_out": 0, "loan_in_usd": 0, "loan_out_usd": 0,
-            "loan_in_count": 0, "loan_out_count": 0,
-            "loan_commission_usd": 0, "loan_commission_base": 0,
+            "ie_in": 0,
+            "ie_out": 0,
+            "ie_in_usd": 0,
+            "ie_out_usd": 0,
+            "ie_in_count": 0,
+            "ie_out_count": 0,
+            "ie_commission_usd": 0,
+            "ie_commission_base": 0,
+            "loan_in": 0,
+            "loan_out": 0,
+            "loan_in_usd": 0,
+            "loan_out_usd": 0,
+            "loan_in_count": 0,
+            "loan_out_count": 0,
+            "loan_commission_usd": 0,
+            "loan_commission_base": 0,
         }
-    
+
     for curr, ie_item in ie_map.items():
         if curr not in currency_data:
             currency_data[curr] = {
-                "tx_deposit": 0, "tx_withdrawal": 0,
-                "tx_deposit_usd": 0, "tx_withdrawal_usd": 0,
-                "tx_deposit_count": 0, "tx_withdrawal_count": 0,
-                "tx_commission_usd": 0, "tx_commission_base": 0,
-                "ie_in": 0, "ie_out": 0, "ie_in_usd": 0, "ie_out_usd": 0,
-                "ie_in_count": 0, "ie_out_count": 0,
-                "ie_commission_usd": 0, "ie_commission_base": 0,
-                "loan_in": 0, "loan_out": 0, "loan_in_usd": 0, "loan_out_usd": 0,
-                "loan_in_count": 0, "loan_out_count": 0,
-                "loan_commission_usd": 0, "loan_commission_base": 0,
+                "tx_deposit": 0,
+                "tx_withdrawal": 0,
+                "tx_deposit_usd": 0,
+                "tx_withdrawal_usd": 0,
+                "tx_deposit_count": 0,
+                "tx_withdrawal_count": 0,
+                "tx_commission_usd": 0,
+                "tx_commission_base": 0,
+                "ie_in": 0,
+                "ie_out": 0,
+                "ie_in_usd": 0,
+                "ie_out_usd": 0,
+                "ie_in_count": 0,
+                "ie_out_count": 0,
+                "ie_commission_usd": 0,
+                "ie_commission_base": 0,
+                "loan_in": 0,
+                "loan_out": 0,
+                "loan_in_usd": 0,
+                "loan_out_usd": 0,
+                "loan_in_count": 0,
+                "loan_out_count": 0,
+                "loan_commission_usd": 0,
+                "loan_commission_base": 0,
             }
         currency_data[curr]["ie_in"] += ie_item["income_base"]
         currency_data[curr]["ie_in_usd"] += ie_item["income_usd"]
@@ -5978,20 +6066,34 @@ async def get_vendor(vendor_id: str, user: dict = Depends(require_permission(Mod
         currency_data[curr]["ie_out_count"] += ie_item["expense_count"]
         currency_data[curr]["ie_commission_usd"] += ie_item["ie_commission_usd"]
         currency_data[curr]["ie_commission_base"] += ie_item["ie_commission_base"]
-    
+
     for curr, loan_item in loan_tx_map.items():
         if curr not in currency_data:
             currency_data[curr] = {
-                "tx_deposit": 0, "tx_withdrawal": 0,
-                "tx_deposit_usd": 0, "tx_withdrawal_usd": 0,
-                "tx_deposit_count": 0, "tx_withdrawal_count": 0,
-                "tx_commission_usd": 0, "tx_commission_base": 0,
-                "ie_in": 0, "ie_out": 0, "ie_in_usd": 0, "ie_out_usd": 0,
-                "ie_in_count": 0, "ie_out_count": 0,
-                "ie_commission_usd": 0, "ie_commission_base": 0,
-                "loan_in": 0, "loan_out": 0, "loan_in_usd": 0, "loan_out_usd": 0,
-                "loan_in_count": 0, "loan_out_count": 0,
-                "loan_commission_usd": 0, "loan_commission_base": 0,
+                "tx_deposit": 0,
+                "tx_withdrawal": 0,
+                "tx_deposit_usd": 0,
+                "tx_withdrawal_usd": 0,
+                "tx_deposit_count": 0,
+                "tx_withdrawal_count": 0,
+                "tx_commission_usd": 0,
+                "tx_commission_base": 0,
+                "ie_in": 0,
+                "ie_out": 0,
+                "ie_in_usd": 0,
+                "ie_out_usd": 0,
+                "ie_in_count": 0,
+                "ie_out_count": 0,
+                "ie_commission_usd": 0,
+                "ie_commission_base": 0,
+                "loan_in": 0,
+                "loan_out": 0,
+                "loan_in_usd": 0,
+                "loan_out_usd": 0,
+                "loan_in_count": 0,
+                "loan_out_count": 0,
+                "loan_commission_usd": 0,
+                "loan_commission_base": 0,
             }
         currency_data[curr]["loan_in"] += loan_item["loan_in_amount"]
         currency_data[curr]["loan_in_usd"] += loan_item["loan_in_amount"]
@@ -5999,35 +6101,78 @@ async def get_vendor(vendor_id: str, user: dict = Depends(require_permission(Mod
         currency_data[curr]["loan_out"] += loan_item["loan_out_amount"]
         currency_data[curr]["loan_out_usd"] += loan_item["loan_out_amount"]
         currency_data[curr]["loan_out_count"] += loan_item["loan_out_count"]
-        currency_data[curr]["loan_commission_usd"] += loan_item.get("loan_commission_amount", 0)
-        currency_data[curr]["loan_commission_base"] += loan_item.get("loan_commission_base", 0)
-    
+        currency_data[curr]["loan_commission_usd"] += loan_item.get(
+            "loan_commission_amount", 0
+        )
+        currency_data[curr]["loan_commission_base"] += loan_item.get(
+            "loan_commission_base", 0
+        )
+
+    # Get custom settled amounts for this vendor (same logic as list endpoint)
+    custom_settled_map_detail = {}
+    custom_stls_detail = await db.vendor_settlements.aggregate([
+        {"$match": {"vendor_id": vendor_id, "settlement_mode": "custom", "status": VendorSettlementStatus.APPROVED}},
+        {"$group": {"_id": "$source_currency", "total": {"$sum": "$gross_amount"}}}
+    ]).to_list(50)
+    for cs in custom_stls_detail:
+        custom_settled_map_detail[cs["_id"]] = cs["total"]
+
     vendor["settlement_by_currency"] = [
         {
             "currency": curr,
             # Total calculations
             "total_in": d["tx_deposit"] + d["ie_in"] + d["loan_in"],
             "total_out": d["tx_withdrawal"] + d["ie_out"] + d["loan_out"],
-            "total_commission_base": d["tx_commission_base"] + d["ie_commission_base"] + d["loan_commission_base"],
-            "total_commission_usd": d["tx_commission_usd"] + d["ie_commission_usd"] + d["loan_commission_usd"],
-            "amount": (d["tx_deposit"] + d["ie_in"] + d["loan_in"]) - (d["tx_withdrawal"] + d["ie_out"] + d["loan_out"]) - (d["tx_commission_base"] + d["ie_commission_base"] + d["loan_commission_base"]),
-            "usd_equivalent": (d["tx_deposit_usd"] + d["ie_in_usd"] + d["loan_in_usd"]) - (d["tx_withdrawal_usd"] + d["ie_out_usd"] + d["loan_out_usd"]) - (d["tx_commission_usd"] + d["ie_commission_usd"] + d["loan_commission_usd"]),
+            "total_commission_base": d["tx_commission_base"]
+            + d["ie_commission_base"]
+            + d["loan_commission_base"],
+            "total_commission_usd": d["tx_commission_usd"]
+            + d["ie_commission_usd"]
+            + d["loan_commission_usd"],
+            "amount": (d["tx_deposit"] + d["ie_in"] + d["loan_in"])
+            - (d["tx_withdrawal"] + d["ie_out"] + d["loan_out"])
+            - (
+                d["tx_commission_base"]
+                + d["ie_commission_base"]
+                + d["loan_commission_base"]
+            )
+            - custom_settled_map_detail.get(curr, 0),
+            "custom_settled": custom_settled_map_detail.get(curr, 0),
+            "usd_equivalent": (d["tx_deposit_usd"] + d["ie_in_usd"] + d["loan_in_usd"])
+            - (d["tx_withdrawal_usd"] + d["ie_out_usd"] + d["loan_out_usd"])
+            - (
+                d["tx_commission_usd"]
+                + d["ie_commission_usd"]
+                + d["loan_commission_usd"]
+            ),
             # Breakdown
-            "deposit_amount": d["tx_deposit"], "withdrawal_amount": d["tx_withdrawal"],
-            "ie_in": d["ie_in"], "ie_out": d["ie_out"],
-            "loan_in": d["loan_in"], "loan_out": d["loan_out"],
+            "deposit_amount": d["tx_deposit"],
+            "withdrawal_amount": d["tx_withdrawal"],
+            "ie_in": d["ie_in"],
+            "ie_out": d["ie_out"],
+            "loan_in": d["loan_in"],
+            "loan_out": d["loan_out"],
             "tx_commission_base": d["tx_commission_base"],
             "ie_commission_base": d["ie_commission_base"],
             "loan_commission_base": d["loan_commission_base"],
-            "commission_earned_usd": d["tx_commission_usd"] + d["ie_commission_usd"] + d["loan_commission_usd"],
-            "commission_earned_base": d["tx_commission_base"] + d["ie_commission_base"] + d["loan_commission_base"],
+            "commission_earned_usd": d["tx_commission_usd"]
+            + d["ie_commission_usd"]
+            + d["loan_commission_usd"],
+            "commission_earned_base": d["tx_commission_base"]
+            + d["ie_commission_base"]
+            + d["loan_commission_base"],
             "deposit_count": d["tx_deposit_count"],
             "withdrawal_count": d["tx_withdrawal_count"],
-            "transaction_count": d["tx_deposit_count"] + d["tx_withdrawal_count"] + d["ie_in_count"] + d["ie_out_count"] + d["loan_in_count"] + d["loan_out_count"]
+            "transaction_count": d["tx_deposit_count"]
+            + d["tx_withdrawal_count"]
+            + d["ie_in_count"]
+            + d["ie_out_count"]
+            + d["loan_in_count"]
+            + d["loan_out_count"],
         }
         for curr, d in currency_data.items()
     ]
-    
+
     return vendor
 
 @api_router.post("/vendors")
