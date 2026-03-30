@@ -9170,7 +9170,7 @@ async def create_transaction(
         for pf in proof_images:
             if pf and pf.filename:
                 content = await pf.read()
-                url = upload_to_r2(content, pf.filename or "proof.png", pf.content_type or "image/png", "proofs")
+                url = upload_to_r2(content, pf.filename or "proof.png", pf.content_type or "application/octet-stream", "proofs")
                 proof_image_urls.append(url)
         return await _create_transaction_impl(
             request,
@@ -9951,7 +9951,7 @@ async def approve_transaction(
     # Normalize to ISO datetime format for consistent querying
     if bank_receipt_date:
         treasury_date = (
-            f"{bank_receipt_date}T00:00:00"
+            f"{bank_receipt_date}T00:00:00+00:00"
             if "T" not in bank_receipt_date
             else bank_receipt_date
         )
@@ -9970,7 +9970,8 @@ async def approve_transaction(
 
     # For deposits, require proof of payment screenshot
     if tx["transaction_type"] == TransactionType.DEPOSIT:
-        if require_proof and not tx.get("accountant_proof_image"):
+        has_proof = tx.get("accountant_proof_image") or tx.get("accountant_proof_images")
+        if require_proof and not has_proof:
             raise HTTPException(
                 status_code=400,
                 detail="Proof of payment screenshot is required for deposit approvals",
@@ -10147,6 +10148,8 @@ async def approve_transaction(
             dest_account = await db.treasury_accounts.find_one(
                 {"account_id": tx["destination_account_id"]}, {"_id": 0}
             )
+            if not dest_account:
+                raise HTTPException(status_code=404, detail="Destination treasury account not found")
             if dest_account:
                 dest_currency = dest_account.get("currency", "USD")
                 tx_currency = tx.get("currency", "USD")
@@ -10188,6 +10191,7 @@ async def approve_transaction(
 
                 updates["source_account_id"] = tx["destination_account_id"]
                 updates["source_account_name"] = dest_account.get("account_name")
+                updates["source_type"] = "treasury"
                 updates["withdrawal_amount_in_source_currency"] = withdrawal_amount
                 updates["source_currency"] = dest_currency
 
@@ -10573,7 +10577,26 @@ async def create_transaction_request(
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
 
-
+    # # Duplicate detection: same client, type, amount within 5 minutes
+    # five_minutes_ago = (now - timedelta(minutes=5)).isoformat()
+    # dup_query = {
+    #     "client_id": client_id,
+    #     "transaction_type": transaction_type,
+    #     "amount": amount,
+    #     "created_at": {"$gte": five_minutes_ago},
+    # }
+    # if destination_type == "psp" and psp_id:
+    #     dup_query["psp_id"] = psp_id
+    # elif destination_type == "vendor" and vendor_id:
+    #     dup_query["vendor_id"] = vendor_id
+    # elif destination_type == "treasury" and destination_account_id:
+    #     dup_query["destination_account_id"] = destination_account_id
+    # recent_dup = await db.transaction_requests.find_one(dup_query, {"_id": 0})
+    # if recent_dup:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail=f"Possible duplicate: Similar request created recently (Request ID: {recent_dup['request_id']}). Wait 5 minutes or use a unique reference.",
+    #     )
 
     # Parse client_tags
     tx_client_tags = []
@@ -10720,8 +10743,8 @@ async def create_transaction_request(
             "destination_bank_name": (
                 destination_account.get("bank_name") if destination_account else None
             ),
-            "vendor_id": vendor_id,
-            "vendor_name": vendor_info["vendor_name"] if vendor_info else None,
+            "vendor_id": vendor_id if destination_type == "vendor" else None,
+            "vendor_name": vendor_info["vendor_name"] if vendor_info and destination_type == "vendor" else None,
             "psp_id": psp_id if destination_type == "psp" else None,
             "psp_name": psp_info["psp_name"] if psp_info else None,
             "psp_commission_rate": psp_info["commission_rate"] if psp_info else None,
