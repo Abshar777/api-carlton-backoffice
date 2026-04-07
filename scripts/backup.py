@@ -27,8 +27,8 @@ load_dotenv()
 
 MONGO_URL = os.environ["MONGO_URL"]
 DB_NAME = os.environ["DB_NAME"]
-BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8580624177:AAFAUTK6BCcd2OgQGwniuqzXbId0FtcXXMw")
-CHAT_ID = os.environ.get("TELEGRAM_BACKUP_CHAT_ID", "-1003874788154")
+BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+CHAT_ID = os.environ["TELEGRAM_BACKUP_CHAT_ID"]
 BACKUP_DIR = Path(__file__).parent / "backup_files"
 
 COLLECTIONS = [
