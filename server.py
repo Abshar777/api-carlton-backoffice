@@ -12924,15 +12924,16 @@ async def get_vendor_borrowers(user: dict = Depends(require_permission(Modules.L
         vid = loan.get("vendor_id")
         if vid:
             if vid not in vendor_stats:
-                vendor_stats[vid] = {"total_loans": 0, "total_disbursed": 0, "total_outstanding": 0, "active_loans": 0}
-            
+                vendor_stats[vid] = {"total_loans": 0, "total_disbursed": 0, "total_outstanding": 0, "active_loans": 0, "currencies": set()}
+
             amount_usd = convert_to_usd(loan["amount"], loan.get("currency", "USD"))
             outstanding = loan["amount"] + loan.get("total_interest", 0) - loan.get("total_repaid", 0)
             outstanding_usd = convert_to_usd(max(0, outstanding), loan.get("currency", "USD"))
-            
+
             vendor_stats[vid]["total_loans"] += 1
             vendor_stats[vid]["total_disbursed"] += amount_usd
             vendor_stats[vid]["total_outstanding"] += outstanding_usd
+            vendor_stats[vid]["currencies"].add(loan.get("currency", "USD"))
             if loan["status"] in ["active", "partially_paid"]:
                 vendor_stats[vid]["active_loans"] += 1
     
@@ -12949,7 +12950,8 @@ async def get_vendor_borrowers(user: dict = Depends(require_permission(Modules.L
                 "total_loans": stats["total_loans"],
                 "total_disbursed_usd": round(stats["total_disbursed"], 2),
                 "total_outstanding_usd": round(stats["total_outstanding"], 2),
-                "active_loans": stats["active_loans"]
+                "active_loans": stats["active_loans"],
+                "currencies": sorted(stats.get("currencies", set())),
             }
         })
     
