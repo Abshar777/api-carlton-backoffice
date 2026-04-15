@@ -12963,6 +12963,8 @@ async def get_vendor_borrowers(user: dict = Depends(require_permission(Modules.L
 async def get_loans(
     status: Optional[str] = None,
     borrower: Optional[str] = None,
+    vendor_id: Optional[str] = None,
+    search: Optional[str] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=200),
     user: dict = Depends(require_permission(Modules.LOANS, Actions.VIEW))
@@ -12973,6 +12975,13 @@ async def get_loans(
         query["status"] = status
     if borrower:
         query["borrower_name"] = {"$regex": borrower, "$options": "i"}
+    if vendor_id:
+        query["vendor_id"] = vendor_id
+    if search:
+        query["$or"] = [
+            {"borrower_name": {"$regex": search, "$options": "i"}},
+            {"loan_id": {"$regex": search, "$options": "i"}},
+        ]
     
     skip = (page - 1) * page_size
     total = await db.loans.count_documents(query)
