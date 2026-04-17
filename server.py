@@ -7721,6 +7721,7 @@ async def get_transactions(
             {
                 "$or": [
                     {"reference": {"$regex": search, "$options": "i"}},
+                    {"crm_reference": {"$regex": search, "$options": "i"}},
                     {"client_name": {"$regex": search, "$options": "i"}},
                     {"transaction_id": {"$regex": search, "$options": "i"}},
                 ]
