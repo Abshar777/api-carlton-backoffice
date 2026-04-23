@@ -18733,7 +18733,7 @@ async def generate_daily_report_html():
             total_broker_lp_pnl += lp_pnl
             
             pnl_color = "green" if lp_pnl >= 0 else "red"
-            lp_rows += f"<tr><td>{lp_name}</td><td>${lp_booked:,.0f}</td><td>${lp_floating:,.0f}</td><td class='{pnl_color}'>${lp_pnl:+,.0f}</td></tr>"
+            lp_rows += f"<tr><td>{lp_name}</td><td>${lp_booked:,.0f}</td><td>${lp_floating:,.0f}</td><td class='stat-value {pnl_color}' style='font-size:13px;font-weight:600;padding:10px 12px;'>${lp_pnl:+,.0f}</td></tr>"
         
         total_dealing_pnl = broker_mt5_pnl + total_broker_lp_pnl
         total_color = "green" if total_dealing_pnl >= 0 else "red"
@@ -18743,14 +18743,14 @@ async def generate_daily_report_html():
         dealing_pnl_html = f'''
                 <!-- Dealing P&L Section -->
                 <div class="section">
-                    <div class="section-title">📈 Today's Dealing P&L</div>
+                    <div class="section-title">📈 Today&#39;s Dealing P&amp;L</div>
                     <div class="stat-grid">
                         <div class="stat-box">
-                            <div class="stat-label">MT5 Broker P&L</div>
+                            <div class="stat-label">MT5 Broker P&amp;L</div>
                             <div class="stat-value {mt5_color}">${broker_mt5_pnl:+,.0f}</div>
                         </div>
                         <div class="stat-box">
-                            <div class="stat-label">LP Hedging P&L</div>
+                            <div class="stat-label">LP Hedging P&amp;L</div>
                             <div class="stat-value {lp_color}">${total_broker_lp_pnl:+,.0f}</div>
                         </div>
                         <div class="stat-box">
@@ -18762,11 +18762,11 @@ async def generate_daily_report_html():
                             <div class="stat-value">${mt5_floating:,.0f}</div>
                         </div>
                     </div>
-                    <div style="background-color: #0B0C10; border-radius: 6px; padding: 20px; margin-top: 15px; text-align: center;">
-                        <div class="stat-label">TOTAL DEALING P&L</div>
-                        <div class="stat-value {total_color}" style="font-size: 32px;">${total_dealing_pnl:+,.0f} USD</div>
+                    <div class="pnl-total-box">
+                        <p class="pnl-total-label">Total Dealing P&amp;L</p>
+                        <p class="pnl-total-value {total_color}">${total_dealing_pnl:+,.0f} USD</p>
                     </div>
-                    {f"""<h4 style="color: #66FCF1; margin-top: 20px; font-size: 12px;">LP BREAKDOWN</h4>
+                    {f"""<h4 style="color:#1FA21B;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin:16px 0 0;">LP Breakdown</h4>
                     <table>
                         <tr><th>LP Name</th><th>Booked</th><th>Floating</th><th>P&L</th></tr>
                         {lp_rows}
@@ -18774,12 +18774,12 @@ async def generate_daily_report_html():
                 </div>
         '''
     else:
-        dealing_pnl_html = '''
+        dealing_pnl_html = """
                 <div class="section">
-                    <div class="section-title">📈 Today's Dealing P&L</div>
-                    <p style="color: #C5C6C7; text-align: center; padding: 15px;">No dealing P&L record for today</p>
+                    <div class="section-title">📈 Today&#39;s Dealing P&amp;L</div>
+                    <p style="color:#94a3b8;text-align:center;padding:20px 0;font-size:13px;">No dealing P&L record for today.</p>
                 </div>
-        '''
+        """
     
     # ===== Reconciliation Summary =====
     today_recon_batches = await db.reconciliation_batches.find({
@@ -18824,8 +18824,8 @@ async def generate_daily_report_html():
     if total_recon_batches > 0:
         recon_rows = ""
         for b in today_recon_batches[:10]:
-            status_color = "#4ade80" if b.get("status") == "completed" else "#fbbf24"
-            recon_rows += f"<tr><td>{b.get('account_name', '-')}</td><td>{b.get('filename', '-')}</td><td>{b.get('total_rows', 0)}</td><td style='color:#4ade80'>{b.get('matched', 0)}</td><td style='color:#f87171'>{b.get('unmatched', 0)}</td><td style='color:{status_color}'>{b.get('status', '-').upper()}</td></tr>"
+            status_color = "#16a34a" if b.get("status") == "completed" else "#d97706"
+            recon_rows += f"<tr><td>{b.get('account_name', '-')}</td><td>{b.get('filename', '-')}</td><td>{b.get('total_rows', 0)}</td><td style='color:#16a34a;font-weight:600;'>{b.get('matched', 0)}</td><td style='color:#dc2626;font-weight:600;'>{b.get('unmatched', 0)}</td><td style='color:{status_color};font-weight:600;'>{b.get('status', '-').upper()}</td></tr>"
         recon_section_html += f"""
                     <table>
                         <tr><th>Account</th><th>File</th><th>Rows</th><th>Matched</th><th>Unmatched</th><th>Status</th></tr>
@@ -18843,8 +18843,30 @@ async def generate_daily_report_html():
          <meta charset="UTF-8">
          <meta name="viewport" content="width=device-width, initial-scale=1.0">
          <title>Carlton FX</title>
+         <style>
+             .section {{ background-color:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin-bottom:16px; }}
+             .section-title {{ color:#0f172a;font-size:12px;font-weight:700;margin:0 0 14px;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #e2e8f0;padding-bottom:10px; }}
+             .stat-grid {{ display:grid;grid-template-columns:repeat(2,1fr);gap:12px; }}
+             .stat-box {{ background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:14px 16px; }}
+             .stat-label {{ color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;font-weight:600; }}
+             .stat-value {{ color:#0f172a;font-size:22px;font-weight:700;margin-top:4px; }}
+             .stat-value.green {{ color:#16a34a; }}
+             .stat-value.red {{ color:#dc2626; }}
+             .stat-value.cyan {{ color:#1FA21B; }}
+             .stat-value.yellow {{ color:#d97706; }}
+             .pnl-total-box {{ background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:18px;margin-top:14px;text-align:center; }}
+             .pnl-total-label {{ color:#15803d;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin:0 0 4px; }}
+             .pnl-total-value {{ font-size:30px;font-weight:700;margin:0; }}
+             .pnl-total-value.green {{ color:#16a34a; }}
+             .pnl-total-value.red {{ color:#dc2626; }}
+             table {{ width:100%;border-collapse:collapse;margin-top:12px; }}
+             th {{ padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;background:#f8fafc;border-bottom:1px solid #e2e8f0; }}
+             td {{ padding:10px 12px;font-size:13px;color:#0f172a;border-bottom:1px solid #f1f5f9; }}
+             td.green {{ color:#16a34a;font-weight:600; }}
+             td.red {{ color:#dc2626;font-weight:600; }}
+         </style>
          </head>
-         
+
          <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
          
          <table width="100%" bgcolor="#f4f6f8" cellpadding="0" cellspacing="0">
@@ -18977,9 +18999,9 @@ async def generate_daily_report_html():
          
          <!-- Footer -->
          <tr>
-         <td align="center" style="padding:25px 20px;font-size:12px;color:#888;">
-         <p style="margin:0 0 8px 0;">This is an automated report from Carlton FX Back Office</p>
-         <p style="margin:0;">Generated at {now.strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
+         <td align="center" style="padding:25px 20px;font-size:11px;color:#94a3b8;">
+         <p style="margin:0 0 4px 0;">Carlton FX &mdash; Daily Business Report</p>
+         <p style="margin:0;">Generated at {now.strftime('%B %d, %Y at %H:%M UTC')} &bull; This is an automated message.</p>
          </td>
          </tr>
          
