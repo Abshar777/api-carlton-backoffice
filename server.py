@@ -174,6 +174,7 @@ class Modules:
 # Standard actions
 class Actions:
     VIEW = "view"
+    LISTING = "listing"   # restricted list-only: name/id/status, no balance or credentials
     CREATE = "create"
     EDIT = "edit"
     DELETE = "delete"
@@ -193,7 +194,28 @@ ALL_MODULES = [
 ]
 
 # All actions list
-ALL_ACTIONS = [Actions.VIEW, Actions.CREATE, Actions.EDIT, Actions.DELETE, Actions.APPROVE, Actions.EXPORT]
+ALL_ACTIONS = [Actions.VIEW, Actions.LISTING, Actions.CREATE, Actions.EDIT, Actions.DELETE, Actions.APPROVE, Actions.EXPORT]
+
+# Safe fields returned when a user only has 'listing' permission (no balance / credentials)
+LISTING_SAFE_FIELDS = {
+    Modules.TREASURY: {
+        "account_id", "account_name", "account_type", "bank_name", "currency", "status",
+    },
+    Modules.CLIENTS: {
+        "client_id", "first_name", "last_name", "name", "status", "kyc_status",
+        "tags", "created_at", "transaction_count", "deposit_count", "withdrawal_count",
+    },
+    Modules.PSP: {
+        "psp_id", "psp_name", "currency", "status",
+        "settlement_destination_name", "settlement_destination_bank",
+    },
+    Modules.LP_MANAGEMENT: {
+        "lp_id", "account_id", "name", "provider", "currency", "status", "account_type",
+    },
+    Modules.EXCHANGERS: {
+        "vendor_id", "vendor_name", "currency", "status", "pending_transactions_count",
+    },
+}
 
 # Module display names
 MODULE_DISPLAY_NAMES = {
@@ -1046,11 +1068,29 @@ def require_permission(module: str, action: str):
         has_permission = await check_permission(user, module, action)
         if not has_permission:
             raise HTTPException(
-                status_code=403, 
+                status_code=403,
                 detail=f"Permission denied: {action} on {module}"
             )
         return user
     return permission_checker
+
+
+def require_listing_or_view(module: str):
+    """Allow access if user has 'view' OR 'listing' permission on the module.
+    Sets user['_listing_only'] = True when the user only has listing access —
+    endpoints use this flag to strip sensitive fields (balance, credentials, etc.)."""
+
+    async def checker(user: dict = Depends(get_current_user)) -> dict:
+        has_view = await check_permission(user, module, Actions.VIEW)
+        has_listing = await check_permission(user, module, Actions.LISTING)
+        if not has_view and not has_listing:
+            raise HTTPException(
+                status_code=403, detail=f"Permission denied: access on {module}"
+            )
+        user["_listing_only"] = not has_view
+        return user
+
+    return checker
 
 # Default role templates
 DEFAULT_ROLES = [
@@ -1919,7 +1959,7 @@ async def delete_client_tag(tag_id: str, user: dict = Depends(require_permission
 
 @api_router.get("/clients")
 async def get_clients(
-    user: dict = Depends(require_permission(Modules.CLIENTS, Actions.VIEW)),
+    user: dict = Depends(require_listing_or_view(Modules.CLIENTS)),
     status: Optional[str] = None,
     search: Optional[str] = None,
     page: int = Query(1, ge=1),
@@ -1982,7 +2022,12 @@ async def get_clients(
         client["withdrawal_count"] = tx_data.get("withdrawal_count", 0)
         client["net_balance"] = client["total_deposits"] - client["total_withdrawals"]
         client["transaction_count"] = client["deposit_count"] + client["withdrawal_count"]
-    
+
+    # Strip sensitive fields for listing-only users
+    if user.get("_listing_only"):
+        safe = LISTING_SAFE_FIELDS[Modules.CLIENTS]
+        clients = [{k: v for k, v in c.items() if k in safe} for c in clients]
+
     return {"items": clients, "total": total, "page": page, "page_size": page_size, "total_pages": total_pages}
 
 @api_router.get("/clients/{client_id}")
@@ -2307,7 +2352,7 @@ async def delete_client_bank_account(request: Request, client_id: str, bank_acco
 
 @api_router.get("/treasury")
 async def get_treasury_accounts(
-    user: dict = Depends(require_permission(Modules.TREASURY, Actions.VIEW)),
+    user: dict = Depends(require_listing_or_view(Modules.TREASURY)),
     search: Optional[str] = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
@@ -2338,7 +2383,12 @@ async def get_treasury_accounts(
             acc["balance_usd"] = round(balance * manual_rates[currency], 2)
         else:
             acc["balance_usd"] = None
-    
+
+    # Strip sensitive fields for listing-only users
+    if user.get("_listing_only"):
+        safe = LISTING_SAFE_FIELDS[Modules.TREASURY]
+        accounts = [{k: v for k, v in acc.items() if k in safe} for acc in accounts]
+
     return {"items": accounts, "total": total, "page": page, "page_size": page_size, "total_pages": total_pages}
 
 @api_router.get("/treasury/{account_id}")
@@ -2775,7 +2825,7 @@ async def inter_treasury_transfer(request: Request, transfer: TreasuryTransferRe
 
 @api_router.get("/lp")
 async def get_lp_accounts(
-    user: dict = Depends(require_permission(Modules.LP_MANAGEMENT, Actions.VIEW)),
+    user: dict = Depends(require_listing_or_view(Modules.LP_MANAGEMENT)),
     search: Optional[str] = None,
     status: Optional[str] = None,
     page: int = Query(1, ge=1),
@@ -2794,6 +2844,12 @@ async def get_lp_accounts(
     total_pages = max(1, (total + page_size - 1) // page_size)
     skip = (page - 1) * page_size
     accounts = await db.lp_accounts.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(page_size).to_list(page_size)
+
+    # Strip sensitive fields for listing-only users
+    if user.get("_listing_only"):
+        safe = LISTING_SAFE_FIELDS[Modules.LP_MANAGEMENT]
+        accounts = [{k: v for k, v in a.items() if k in safe} for a in accounts]
+
     return {"items": accounts, "total": total, "page": page, "page_size": page_size, "total_pages": total_pages}
 
 
@@ -3600,21 +3656,27 @@ async def send_dealing_pnl_email(date: str, user: dict = Depends(require_permiss
 # ============== PSP ROUTES ==============
 
 @api_router.get("/psp")
-async def get_psps(user: dict = Depends(require_permission(Modules.PSP, Actions.VIEW))):
+async def get_psps(user: dict = Depends(require_listing_or_view(Modules.PSP))):
     psps = await db.psps.find({}, {"_id": 0}).to_list(1000)
-    
+
     # Batch fetch treasury accounts to avoid N+1 queries
     treasury_ids = list(set(psp.get("settlement_destination_id") for psp in psps if psp.get("settlement_destination_id")))
     treasury_map = {}
     if treasury_ids:
         treasuries = await db.treasury_accounts.find({"account_id": {"$in": treasury_ids}}, {"_id": 0}).to_list(len(treasury_ids))
         treasury_map = {t["account_id"]: t for t in treasuries}
-    
+
     for psp in psps:
         if psp.get("settlement_destination_id"):
             dest = treasury_map.get(psp["settlement_destination_id"])
             psp["settlement_destination_name"] = dest["account_name"] if dest else "Unknown"
             psp["settlement_destination_bank"] = dest.get("bank_name") if dest else None
+
+    # Strip sensitive fields for listing-only users
+    if user.get("_listing_only"):
+        safe = LISTING_SAFE_FIELDS[Modules.PSP]
+        psps = [{k: v for k, v in p.items() if k in safe} for p in psps]
+
     return psps
 
 @api_router.get("/psp/{psp_id}")
@@ -5590,7 +5652,7 @@ async def get_vendors(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     search: Optional[str] = None,
-    user: dict = Depends(require_permission(Modules.EXCHANGERS, Actions.VIEW))
+    user: dict = Depends(require_listing_or_view(Modules.EXCHANGERS)),
 ):
     # Check cache first
     cache_key = get_cache_key("vendors:list", page=page, page_size=page_size, search=search)
@@ -5781,9 +5843,17 @@ async def get_vendors(
         "total_pages": (total + page_size - 1) // page_size if total > 0 else 1
     }
     
-    # Cache the response
+    # Cache the full response (always store complete data)
     set_cached(cache_key, response, CACHE_TTL['vendors_list'])
-    
+
+    # Strip sensitive fields for listing-only users (after caching full data)
+    if user.get("_listing_only"):
+        safe = LISTING_SAFE_FIELDS[Modules.EXCHANGERS]
+        response = {
+            **response,
+            "items": [{k: v for k, v in v.items() if k in safe} for v in response["items"]],
+        }
+
     return response
 
 
