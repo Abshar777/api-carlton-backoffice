@@ -2853,6 +2853,37 @@ async def get_lp_accounts(
     return {"items": accounts, "total": total, "page": page, "page_size": page_size, "total_pages": total_pages}
 
 
+@api_router.get("/lp/dashboard")
+async def get_lp_dashboard(
+    user: dict = Depends(require_permission(Modules.LP_MANAGEMENT, Actions.VIEW))
+):
+    """Get LP dashboard with summary statistics"""
+    accounts = await db.lp_accounts.find({}, {"_id": 0}).to_list(1000)
+
+    total_balance = sum(a.get("balance", 0) for a in accounts)
+    total_deposits = sum(a.get("total_deposits", 0) for a in accounts)
+    total_withdrawals = sum(a.get("total_withdrawals", 0) for a in accounts)
+    active_count = sum(1 for a in accounts if a.get("status") == LPAccountStatus.ACTIVE)
+
+    # Get recent transactions
+    recent_txs = (
+        await db.lp_transactions.find({}, {"_id": 0})
+        .sort("created_at", -1)
+        .limit(10)
+        .to_list(10)
+    )
+
+    return {
+        "total_balance": total_balance,
+        "total_deposits": total_deposits,
+        "total_withdrawals": total_withdrawals,
+        "active_lp_count": active_count,
+        "total_lp_count": len(accounts),
+        "accounts": accounts,
+        "recent_transactions": recent_txs,
+    }
+
+
 @api_router.get("/lp/{lp_id}")
 async def get_lp_account(lp_id: str, user: dict = Depends(require_permission(Modules.LP_MANAGEMENT, Actions.VIEW))):
     """Get a specific LP account"""
@@ -16293,6 +16324,121 @@ async def upload_statement_for_reconciliation(
         "supported_banks": [b["name"] for b in SUPPORTED_BANKS],
         "supported_psps": [p["name"] for p in SUPPORTED_PSPS]
     }
+
+
+@api_router.get("/reconciliation/statements")
+async def list_reconciliation_statements(
+    account_id: Optional[str] = None,
+    account_type: Optional[str] = None,
+    status: Optional[str] = None,
+    user: dict = Depends(require_permission(Modules.RECONCILIATION, Actions.VIEW)),
+):
+    """List uploaded statements for an account"""
+    query = {}
+    if account_id:
+        query["account_id"] = account_id
+    if account_type:
+        query["account_type"] = account_type
+    if status:
+        query["status"] = status
+
+    docs = (
+        await db.reconciliation_statements.find(query, {"_id": 0, "file_content": 0})
+        .sort("created_at", -1)
+        .to_list(500)
+    )
+    return {"statements": docs}
+
+
+@api_router.post("/reconciliation/statements/{statement_id}/mark-done")
+async def mark_statement_done(
+    statement_id: str,
+    request: Request,
+    body: dict = Body(default={}),
+    user: dict = Depends(require_permission(Modules.RECONCILIATION, Actions.EDIT)),
+):
+    """Mark a statement as reconciled"""
+    stmt = await db.reconciliation_statements.find_one({"statement_id": statement_id})
+    if not stmt:
+        raise HTTPException(status_code=404, detail="Statement not found")
+
+    reconciliation_date = body.get("reconciliation_date") or datetime.now(timezone.utc).date().isoformat()
+    notes = body.get("notes", "")
+
+    await db.reconciliation_statements.update_one(
+        {"statement_id": statement_id},
+        {"$set": {
+            "status": "completed",
+            "reconciliation_date": reconciliation_date,
+            "notes": notes,
+            "done_by": user.get("email", ""),
+            "done_at": datetime.now(timezone.utc).isoformat(),
+        }},
+    )
+
+    # Also insert into reconciliations history
+    recon_doc = {
+        "recon_id": str(uuid.uuid4()),
+        "statement_id": statement_id,
+        "account_id": stmt.get("account_id"),
+        "account_type": stmt.get("account_type"),
+        "filename": stmt.get("filename"),
+        "statement_date": stmt.get("statement_date"),
+        "reconciliation_date": reconciliation_date,
+        "status": "completed",
+        "remarks": notes,
+        "done_by": user.get("email", ""),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.reconciliations.insert_one(recon_doc)
+
+    await log_activity(request, user, "update", "reconciliation", f"Marked statement {statement_id} as done")
+    return {"success": True}
+
+
+@api_router.patch("/reconciliation/statements/{statement_id}/date")
+async def update_statement_date(
+    statement_id: str,
+    body: dict = Body(...),
+    user: dict = Depends(require_permission(Modules.RECONCILIATION, Actions.EDIT)),
+):
+    """Update the statement date"""
+    stmt = await db.reconciliation_statements.find_one({"statement_id": statement_id})
+    if not stmt:
+        raise HTTPException(status_code=404, detail="Statement not found")
+
+    new_date = body.get("statement_date")
+    if not new_date:
+        raise HTTPException(status_code=400, detail="statement_date required")
+
+    await db.reconciliation_statements.update_one(
+        {"statement_id": statement_id},
+        {"$set": {"statement_date": new_date}},
+    )
+    return {"success": True}
+
+
+@api_router.get("/reconciliation/statements/{statement_id}/file")
+async def download_statement_file(
+    statement_id: str,
+    user: dict = Depends(require_permission(Modules.RECONCILIATION, Actions.VIEW)),
+):
+    """Download the original uploaded statement file"""
+    from fastapi.responses import Response
+
+    stmt = await db.reconciliation_statements.find_one({"statement_id": statement_id})
+    if not stmt or not stmt.get("file_content"):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    file_bytes = base64.b64decode(stmt["file_content"])
+    content_type = stmt.get("file_content_type", "application/octet-stream")
+    filename = stmt.get("filename", "statement")
+
+    return Response(
+        content=file_bytes,
+        media_type=content_type,
+        headers={"Content-Disposition": f'inline; filename="{filename}"'},
+    )
 
 
 @api_router.get("/reconciliation/supported-banks")
