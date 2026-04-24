@@ -18815,72 +18815,127 @@ async def generate_daily_report_html():
     loans = await db.loans.find({}, {"_id": 0}).to_list(1000)
     loans_dict = {l.get("loan_id"): l for l in loans}
     
-    # ===== NEW: Exchangers Summary with Commissions & Settlements =====
-    # Calculate vendor balances including I&E and Loans
+    # ===== Exchangers Summary with Commissions & Settlements =====
     vendor_summaries = []
     for vendor in vendors:
         vendor_id = vendor.get("vendor_id")
         vendor_name = vendor.get("vendor_name", "Unknown")
-        
-        # Get pending transactions for this vendor
-        vendor_txs = await db.transactions.find({
-            "vendor_id": vendor_id,
-            "status": "approved",
-            "settled": {"$ne": True}
-        }, {"_id": 0}).to_list(1000)
-        
-        pending_deposits = sum(t.get("amount", 0) for t in vendor_txs if t.get("transaction_type") == "deposit")
-        pending_withdrawals = sum(t.get("amount", 0) for t in vendor_txs if t.get("transaction_type") == "withdrawal")
-        total_commission = sum(t.get("vendor_commission_amount", 0) or 0 for t in vendor_txs)
-        
-        # Get I&E entries for this vendor
-        vendor_ie = await db.income_expense_entries.find({
-            "vendor_id": vendor_id,
-            "status": "approved"
-        }, {"_id": 0}).to_list(1000)
-        
-        ie_income = sum(e.get("base_amount", e.get("amount", 0)) for e in vendor_ie if e.get("entry_type") == "income")
-        ie_expense = sum(e.get("base_amount", e.get("amount", 0)) for e in vendor_ie if e.get("entry_type") == "expense")
-        
-        # Get loan transactions for this vendor
-        vendor_loans = await db.loan_transactions.find({
-            "vendor_id": vendor_id,
-            "status": "approved"
-        }, {"_id": 0}).to_list(1000)
-        
-        loan_in = sum(lt.get("amount", 0) for lt in vendor_loans if lt.get("transaction_type") == "repayment")
-        loan_out = sum(lt.get("amount", 0) for lt in vendor_loans if lt.get("transaction_type") == "disbursement")
-        
-        # Calculate settlement balance (what we owe vendor or vendor owes us)
-        # Deposits: vendor collected money for us (we owe them)
-        # Withdrawals: vendor paid out for us (they owe us)
-        # I&E Income from vendor: they owe us
-        # I&E Expense to vendor: we owe them
-        # Loan repayments: they paid us (reduces what we owe)
-        # Loan disbursements: we gave them (increases what we owe)
-        settlement_balance = (pending_deposits - pending_withdrawals) - total_commission + (ie_expense - ie_income) + (loan_out - loan_in)
-        
-        # Get today's settlements
-        today_settlements = await db.vendor_settlements.find({
-            "vendor_id": vendor_id,
-            "created_at": {"$gte": today_start.isoformat()}
-        }, {"_id": 0}).to_list(100)
-        settled_today = sum(s.get("amount", 0) for s in today_settlements)
-        
+
+        # Get pending transactions (approved + completed, unsettled)
+        vendor_txs = await db.transactions.find(
+            {"vendor_id": vendor_id, "status": {"$in": ["approved", "completed"]}, "settled": {"$ne": True}},
+            {"_id": 0},
+        ).to_list(1000)
+
+        # Determine primary currency: dealing_currency or most-used base_currency
+        primary_currency = vendor.get("dealing_currency") or "USD"
+        if not vendor.get("dealing_currency") and vendor_txs:
+            currency_counts = {}
+            for t in vendor_txs:
+                c = t.get("base_currency") or t.get("currency", "USD")
+                currency_counts[c] = currency_counts.get(c, 0) + 1
+            primary_currency = max(currency_counts, key=currency_counts.get)
+
+        pending_deposits = sum(
+            t.get("base_amount") or t.get("amount", 0) or 0
+            for t in vendor_txs
+            if t.get("transaction_type") == "deposit"
+            and (t.get("base_currency") or t.get("currency", "USD")) == primary_currency
+        )
+        pending_withdrawals = sum(
+            t.get("base_amount") or t.get("amount", 0) or 0
+            for t in vendor_txs
+            if t.get("transaction_type") == "withdrawal"
+            and (t.get("base_currency") or t.get("currency", "USD")) == primary_currency
+        )
+        total_commission = sum(
+            t.get("vendor_commission_base_amount") or t.get("vendor_commission_amount", 0) or 0
+            for t in vendor_txs
+            if (t.get("base_currency") or t.get("currency", "USD")) == primary_currency
+        )
+
+        # Get I&E entries (approved + completed, unsettled, exclude converted loans)
+        vendor_ie = await db.income_expenses.find(
+            {
+                "vendor_id": vendor_id,
+                "status": {"$in": ["approved", "completed"]},
+                "converted_to_loan": {"$ne": True},
+                "settled": {"$ne": True},
+            },
+            {"_id": 0},
+        ).to_list(1000)
+
+        ie_income = sum(
+            e.get("base_amount") or e.get("amount", 0) or 0
+            for e in vendor_ie
+            if e.get("entry_type") == "income"
+            and (e.get("base_currency") or e.get("currency", "USD")) == primary_currency
+        )
+        ie_expense = sum(
+            e.get("base_amount") or e.get("amount", 0) or 0
+            for e in vendor_ie
+            if e.get("entry_type") == "expense"
+            and (e.get("base_currency") or e.get("currency", "USD")) == primary_currency
+        )
+
+        # Loan transactions (completed, unsettled) via correct fields
+        vendor_loans_out = await db.loan_transactions.find(
+            {"source_vendor_id": vendor_id, "status": "completed", "settled": {"$ne": True}},
+            {"_id": 0, "amount": 1, "currency": 1},
+        ).to_list(1000)
+        vendor_loans_in = await db.loan_transactions.find(
+            {"credit_to_vendor_id": vendor_id, "status": "completed", "settled": {"$ne": True}},
+            {"_id": 0, "amount": 1, "currency": 1},
+        ).to_list(1000)
+
+        loan_out = sum(lt.get("amount", 0) for lt in vendor_loans_out if lt.get("currency", "USD") == primary_currency)
+        loan_in = sum(lt.get("amount", 0) for lt in vendor_loans_in if lt.get("currency", "USD") == primary_currency)
+
+        # Custom (partial) settlements already paid
+        custom_settled_rows = await db.vendor_settlements.aggregate([
+            {"$match": {"vendor_id": vendor_id, "settlement_mode": "custom", "status": VendorSettlementStatus.APPROVED, "source_currency": primary_currency}},
+            {"$group": {"_id": None, "total": {"$sum": "$gross_amount"}}},
+        ]).to_list(1)
+        custom_settled_amt = custom_settled_rows[0]["total"] if custom_settled_rows else 0
+
+        # Settlement balance in base currency (positive = we owe vendor, negative = vendor owes us)
+        settlement_balance = (
+            (pending_deposits - pending_withdrawals)
+            - total_commission
+            + (ie_income - ie_expense)
+            + (loan_in - loan_out)
+            - custom_settled_amt
+        )
+        settlement_balance_usd = convert_to_usd(settlement_balance, primary_currency)
+
+        # Today's approved settlements
+        today_settlements = await db.vendor_settlements.find(
+            {
+                "vendor_id": vendor_id,
+                "status": VendorSettlementStatus.APPROVED,
+                "updated_at": {"$gte": today_start.isoformat()},
+            },
+            {"_id": 0},
+        ).to_list(100)
+        settled_today = sum(s.get("settlement_amount", 0) or 0 for s in today_settlements)
+
         vendor_summaries.append({
             "name": vendor_name,
+            "currency": primary_currency,
             "pending_deposits": pending_deposits,
             "pending_withdrawals": pending_withdrawals,
             "commission": total_commission,
-            "ie_balance": ie_expense - ie_income,
-            "loan_balance": loan_out - loan_in,
+            "ie_balance": ie_income - ie_expense,
+            "loan_balance": loan_in - loan_out,
+            "custom_settled": custom_settled_amt,
             "settlement_balance": settlement_balance,
-            "settled_today": settled_today
+            "settlement_balance_usd": settlement_balance_usd,
+            "settled_today": settled_today,
         })
-    
+
     total_vendor_settlements_today = sum(v["settled_today"] for v in vendor_summaries)
-    total_pending_to_vendors = sum(v["settlement_balance"] for v in vendor_summaries if v["settlement_balance"] > 0)
-    total_pending_from_vendors = sum(abs(v["settlement_balance"]) for v in vendor_summaries if v["settlement_balance"] < 0)
+    total_pending_to_vendors = sum(v["settlement_balance_usd"] for v in vendor_summaries if v["settlement_balance_usd"] > 0)
+    total_pending_from_vendors = sum(abs(v["settlement_balance_usd"]) for v in vendor_summaries if v["settlement_balance_usd"] < 0)
     
     # Dealing P&L - Get today's record and calculate
     dealing_pnl_record = await db.dealing_pnl.find_one({"date": today_date}, {"_id": 0})
@@ -19026,7 +19081,29 @@ async def generate_daily_report_html():
     
     recon_section_html += "\n                </div>"
     daily_recon_html = recon_section_html
-    
+
+    # Pre-build exchanger table rows (avoids nested f-string quote escaping issues)
+    vendor_rows_html = ""
+    for v in vendor_summaries[:10]:
+        bal = v["settlement_balance"]
+        bal_color = "#dc2626" if bal > 0 else "#16a34a" if bal < 0 else "#333333"
+        vendor_rows_html += (
+            f"<tr>"
+            f"<td style='font-weight:600;white-space:normal;max-width:150px;'>{v['name']}</td>"
+            f"<td style='color:#666;font-size:11px;'>{v['currency']}</td>"
+            f"<td style='color:#16a34a;'>{v['pending_deposits']:,.0f}</td>"
+            f"<td style='color:#dc2626;'>{v['pending_withdrawals']:,.0f}</td>"
+            f"<td>{v['commission']:,.0f}</td>"
+            f"<td>{v['ie_balance']:,.0f}</td>"
+            f"<td>{v['loan_balance']:,.0f}</td>"
+            f"<td style='color:{bal_color};font-weight:600;'>{bal:+,.0f} {v['currency']}</td>"
+            f"</tr>"
+        )
+    vendor_overflow_note = (
+        f"<p style='color:#64748b;font-size:11px;margin-top:10px;'>Showing 10 of {len(vendor_summaries)} exchangers</p>"
+        if len(vendor_summaries) > 10 else ""
+    )
+
     # Generate HTML
     html = f"""
          <!doctype html>
@@ -19051,11 +19128,23 @@ async def generate_daily_report_html():
              .pnl-total-value {{ font-size:30px;font-weight:700;margin:0; }}
              .pnl-total-value.green {{ color:#16a34a; }}
              .pnl-total-value.red {{ color:#dc2626; }}
-             table {{ width:100%;border-collapse:collapse;margin-top:12px; }}
-             th {{ padding:9px 12px;text-align:left;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;background:#f8fafc;border-bottom:1px solid #e2e8f0; }}
-             td {{ padding:10px 12px;font-size:13px;color:#0f172a;border-bottom:1px solid #f1f5f9; }}
+             .table-scroll {{ overflow-x:auto;-webkit-overflow-scrolling:touch;margin-top:12px;border-radius:6px; }}
+             table {{ width:100%;border-collapse:collapse; }}
+             table.wide {{ min-width:520px; }}
+             th {{ padding:8px 10px;text-align:left;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;background:#f8fafc;border-bottom:1px solid #e2e8f0;white-space:nowrap; }}
+             td {{ padding:9px 10px;font-size:12px;color:#0f172a;border-bottom:1px solid #f1f5f9;white-space:nowrap; }}
+             td.wrap {{ white-space:normal; }}
              td.green {{ color:#16a34a;font-weight:600; }}
              td.red {{ color:#dc2626;font-weight:600; }}
+             @media only screen and (max-width:480px) {{
+                 body {{ padding:8px !important; }}
+                 .section {{ padding:14px 12px !important; }}
+                 .section-title {{ font-size:11px !important; }}
+                 .stat-grid {{ gap:8px !important; }}
+                 .stat-value {{ font-size:18px !important; }}
+                 th {{ padding:7px 8px;font-size:9px; }}
+                 td {{ padding:7px 8px;font-size:11px; }}
+             }}
          </style>
          </head>
 
@@ -19141,18 +19230,13 @@ async def generate_daily_report_html():
          
          <!-- Treasury -->
          <h3 style="color:#1ea21a;margin-top:30px;">Treasury Status</h3>
-         
-         <table width="100%" cellpadding="6" style="border-collapse:collapse;margin-top:10px;">
-         <tr style="font-size:12px;color:#666;border-bottom:1px solid #eee;">
-         <td>Account</td>
-         <td>Currency</td>
-         <td align="right">Balance</td>
-         <td align="right">USD Value</td>
-         </tr>
-         
-         {''.join(f"<tr><td>{a.get('account_name','N/A')}</td><td>{a.get('currency','USD')}</td><td align='right'>{a.get('balance',0):,.2f}</td><td align='right'>${convert_to_usd(a.get('balance',0),a.get('currency','USD')):,.2f}</td></tr>" for a in treasury_accounts[:5])}
-         
+
+         <div class="table-scroll">
+         <table class="wide" cellpadding="0" cellspacing="0">
+         <tr><th>Account</th><th>Currency</th><th style="text-align:right;">Balance</th><th style="text-align:right;">USD Value</th></tr>
+         {''.join(f"<tr><td class='wrap'>{a.get('account_name','N/A')}</td><td>{a.get('currency','USD')}</td><td style='text-align:right;'>{a.get('balance',0):,.2f}</td><td style='text-align:right;'>${convert_to_usd(a.get('balance',0),a.get('currency','USD')):,.2f}</td></tr>" for a in treasury_accounts[:5])}
          </table>
+         </div>
          
          <!-- PSP -->
          <h3 style="color:#1ea21a;margin-top:30px;">PSP Status</h3>
@@ -19180,10 +19264,50 @@ async def generate_daily_report_html():
          </table>
          
          {daily_recon_html}
-         
+
+         <!-- Exchangers Summary -->
+         <h3 style="color:#1ea21a;margin-top:30px;">Exchangers Summary</h3>
+
+         <table width="100%" cellpadding="8" style="border-collapse:collapse;margin-top:10px;">
+         <tr>
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">Settled Today</div>
+         <div style="font-size:18px;font-weight:bold;color:#1ea21a;">${total_vendor_settlements_today:,.2f}</div>
+         </td>
+         <td width="10"></td>
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">Active Exchangers</div>
+         <div style="font-size:18px;font-weight:bold;">{len(vendors)}</div>
          </td>
          </tr>
-         
+         <tr><td height="8" colspan="3"></td></tr>
+         <tr>
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">We Owe (USD equiv.)</div>
+         <div style="font-size:18px;font-weight:bold;color:#dc2626;">${total_pending_to_vendors:,.2f}</div>
+         </td>
+         <td width="10"></td>
+         <td style="background:#f4f6f8;border-radius:6px;">
+         <div style="font-size:12px;color:#666;">They Owe (USD equiv.)</div>
+         <div style="font-size:18px;font-weight:bold;color:#16a34a;">${total_pending_from_vendors:,.2f}</div>
+         </td>
+         </tr>
+         </table>
+
+         {"" if not vendor_rows_html else f'''
+         <div class="table-scroll" style="margin-top:14px;">
+         <table class="wide" style="min-width:580px;" cellpadding="0" cellspacing="0">
+             <tr><th>Exchanger</th><th>Ccy</th><th>Deposits</th><th>Withdrawals</th><th>Comm.</th><th>I&E</th><th>Loans</th><th>Balance</th></tr>
+             {vendor_rows_html}
+         </table>
+         </div>
+         {vendor_overflow_note}
+         <p style="color:#94a3b8;font-size:10px;margin-top:8px;">* Positive = We owe them &nbsp;|&nbsp; Negative = They owe us &nbsp;|&nbsp; Totals shown in USD equivalent</p>
+         '''}
+
+         </td>
+         </tr>
+
          <!-- Divider -->
          <tr>
          <td style="border-top:1px solid #eeeeee"></td>
