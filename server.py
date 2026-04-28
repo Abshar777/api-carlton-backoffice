@@ -16462,18 +16462,20 @@ async def upload_statement_for_reconciliation(
     )
     
     content = await file.read()
-    filename = file.filename.lower() if file.filename else ""
-    
+    original_name = file.filename or ""
+    filename = original_name.lower()
+
+    allowed_exts = (".pdf", ".xlsx", ".xls", ".csv", ".txt", ".png", ".jpg", ".jpeg")
+    if not any(filename.endswith(ext) for ext in allowed_exts):
+        raise HTTPException(status_code=400, detail="Unsupported file type. Use PDF, XLSX, CSV, or TXT.")
+
     parsed_entries = []
     detected_source = "unknown"
     source_type = "unknown"
-    
+
     try:
-        # Auto-detect statement type if not specified
         if statement_type == "auto":
-            # Try to detect from filename first
             if filename.endswith('.pdf'):
-                # Need to read content for detection
                 try:
                     from pdf2image import convert_from_bytes
                     import pytesseract
@@ -16482,10 +16484,10 @@ async def upload_statement_for_reconciliation(
                     detected_type, detected_name = detect_statement_type(sample_text, filename)
                     statement_type = detected_type if detected_type != "unknown" else "bank"
                 except:
-                    statement_type = "bank"  # Default to bank
+                    statement_type = "bank"
             else:
-                statement_type = "bank"  # Default for non-PDF
-        
+                statement_type = "bank"
+
         if filename.endswith('.csv'):
             decoded = content.decode('utf-8')
             if statement_type == "psp":
@@ -16494,11 +16496,11 @@ async def upload_statement_for_reconciliation(
             else:
                 parsed_entries, detected_source = parse_bank_statement_csv(decoded, filename)
                 source_type = "bank"
-                
+
         elif filename.endswith(('.xlsx', '.xls')):
             parsed_entries, detected_source = parse_bank_statement_excel(content, filename)
             source_type = "bank"
-                
+
         elif filename.endswith('.pdf'):
             if statement_type == "psp":
                 parsed_entries, detected_source = parse_psp_statement_pdf(content, filename, date)
@@ -16506,23 +16508,43 @@ async def upload_statement_for_reconciliation(
             else:
                 parsed_entries, detected_source = parse_bank_statement_pdf(content, filename, date)
                 source_type = "bank"
-            
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file format. Use CSV, XLSX, or PDF.")
-            
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Statement parse error: {e}")
         raise HTTPException(status_code=400, detail=f"Failed to parse statement: {str(e)}")
-    
+
+    # Save statement record to DB so it appears in Uploaded Statements
+    statement_id = str(uuid.uuid4())
+    file_b64 = base64.b64encode(content).decode("utf-8")
+    statement_doc = {
+        "statement_id": statement_id,
+        "account_id": account_id,
+        "account_type": account_type,
+        "filename": original_name,
+        "statement_date": date,
+        "status": "pending",
+        "file_content": file_b64,
+        "file_content_type": file.content_type or "application/octet-stream",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": user.get("email", ""),
+    }
+    await db.reconciliation_statements.insert_one(statement_doc)
+
+    await log_activity(request, user, "create", "reconciliation", f"Uploaded statement: {original_name}")
+
     return {
-        "entries": parsed_entries, 
+        "statement_id": statement_id,
+        "filename": original_name,
+        "account_id": account_id,
+        "account_type": account_type,
+        "statement_date": date,
+        "status": "pending",
+        "entries": parsed_entries,
         "count": len(parsed_entries),
         "detected_source": detected_source,
         "source_type": source_type,
-        "supported_banks": [b["name"] for b in SUPPORTED_BANKS],
-        "supported_psps": [p["name"] for p in SUPPORTED_PSPS]
     }
 
 
