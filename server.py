@@ -2110,15 +2110,26 @@ async def create_client(request: Request, client_data: ClientCreate, user: dict 
 async def update_client(request: Request, client_id: str, update_data: ClientUpdate, user: dict = Depends(require_permission(Modules.CLIENTS, Actions.EDIT))):
 
     updates = {k: v for k, v in update_data.model_dump().items() if v is not None}
+    # Allow explicit empty list for tags (empty list is falsy but not None)
+    raw = update_data.model_dump()
+    if "tags" in raw and raw["tags"] is not None:
+        updates["tags"] = raw["tags"]
     if not updates:
         raise HTTPException(status_code=400, detail="No updates provided")
-    
+
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
+
     result = await db.clients.update_one({"client_id": client_id}, {"$set": updates})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Client not found")
-    
+
+    # Backfill client_tags on all existing transactions when tags are updated
+    if "tags" in updates:
+        await db.transactions.update_many(
+            {"client_id": client_id},
+            {"$set": {"client_tags": updates["tags"], "updated_at": updates["updated_at"]}}
+        )
+
     await log_activity(request, user, "edit", "clients", "Updated client")
 
     return await db.clients.find_one({"client_id": client_id}, {"_id": 0})
