@@ -2276,7 +2276,21 @@ async def create_client(request: Request, client_data: ClientCreate, user: dict 
     existing = await db.clients.find_one({"email": client_data.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="Client email already exists")
-    
+
+    # CRM Customer ID is required
+    crm_id = (client_data.crm_customer_id or "").strip()
+    if not crm_id:
+        raise HTTPException(status_code=400, detail="CRM Customer ID is required")
+
+    # CRM Customer ID must be unique (case-insensitive)
+    crm_conflict = await db.clients.find_one(
+        {"crm_customer_id": crm_id},
+        {"_id": 0, "client_id": 1},
+        collation={"locale": "en", "strength": 2},
+    )
+    if crm_conflict:
+        raise HTTPException(status_code=400, detail="CRM Customer ID already exists")
+
     client_id = f"client_{uuid.uuid4().hex[:12]}"
     now = datetime.now(timezone.utc)
     
@@ -2305,6 +2319,19 @@ async def update_client(request: Request, client_id: str, update_data: ClientUpd
         updates["tags"] = raw["tags"]
     if not updates:
         raise HTTPException(status_code=400, detail="No updates provided")
+
+    # If CRM Customer ID is being changed, check uniqueness (case-insensitive, exclude self)
+    if "crm_customer_id" in updates:
+        new_crm = (updates["crm_customer_id"] or "").strip()
+        if new_crm:
+            crm_conflict = await db.clients.find_one(
+                {"crm_customer_id": new_crm, "client_id": {"$ne": client_id}},
+                {"_id": 0, "client_id": 1},
+                collation={"locale": "en", "strength": 2},
+            )
+            if crm_conflict:
+                raise HTTPException(status_code=400, detail="CRM Customer ID already exists")
+            updates["crm_customer_id"] = new_crm  # store trimmed value
 
     updates["updated_at"] = datetime.now(timezone.utc).isoformat()
 
@@ -2516,13 +2543,16 @@ async def bulk_upload_clients(
     created = 0
     skipped = 0
     errors = []
-    
-    # Get existing emails for duplicate check
+
+    # Pre-load existing emails AND CRM IDs for duplicate checks
     existing_emails = set()
-    async for doc in db.clients.find({}, {"email": 1, "_id": 0}):
+    existing_crm_ids = set()   # lower-cased for case-insensitive comparison
+    async for doc in db.clients.find({}, {"email": 1, "crm_customer_id": 1, "_id": 0}):
         if doc.get("email"):
             existing_emails.add(doc["email"].lower().strip())
-    
+        if doc.get("crm_customer_id"):
+            existing_crm_ids.add(doc["crm_customer_id"].lower().strip())
+
     bulk_docs = []
     for idx, row in enumerate(data_rows):
         try:
@@ -2538,21 +2568,34 @@ async def bulk_upload_clients(
                 first_name = str(row[col_map['first_name']] or '').strip()
             if 'last_name' in col_map:
                 last_name = str(row[col_map['last_name']] or '').strip()
-            
+
             email = str(row[col_map.get('email', -1)] or '').strip().lower() if 'email' in col_map else ''
             phone = str(row[col_map.get('phone', -1)] or '').strip() if 'phone' in col_map else ''
             country = str(row[col_map.get('country', -1)] or '').strip() if 'country' in col_map else ''
             crm_id = str(row[col_map.get('crm_id', -1)] or '').strip() if 'crm_id' in col_map else ''
-            
+
             if not first_name or not email:
                 skipped += 1
                 continue
-            
+
+            # CRM Customer ID is required for every row
+            if not crm_id:
+                errors.append(f"Row {idx + 2}: CRM Customer ID is required")
+                skipped += 1
+                continue
+
             if email in existing_emails:
                 skipped += 1
                 continue
-            
+
+            # CRM Customer ID must be unique (case-insensitive, across DB + current batch)
+            if crm_id.lower() in existing_crm_ids:
+                errors.append(f"Row {idx + 2}: CRM Customer ID '{crm_id}' already exists")
+                skipped += 1
+                continue
+
             existing_emails.add(email)
+            existing_crm_ids.add(crm_id.lower())
             client_id = f"client_{uuid.uuid4().hex[:12]}"
             
             bulk_docs.append({
@@ -22298,6 +22341,17 @@ async def startup_db_indexes():
         await db.clients.create_index(
             [("first_name", "text"), ("last_name", "text"), ("email", "text")]
         )
+        # CRM Customer ID: unique, case-insensitive, sparse (allows existing null records)
+        try:
+            await db.clients.create_index(
+                "crm_customer_id",
+                unique=True,
+                sparse=True,
+                collation={"locale": "en", "strength": 2},
+                name="crm_customer_id_unique_ci",
+            )
+        except Exception:
+            pass  # Index may already exist
 
         # Index for roles
         await db.roles.create_index("role_id", unique=True, sparse=True)
