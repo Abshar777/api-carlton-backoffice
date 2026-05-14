@@ -256,6 +256,7 @@ class RoleUpdate(BaseModel):
     permissions: Optional[dict] = None
     hierarchy_level: Optional[int] = None
     is_active: Optional[bool] = None
+    ie_own_entries_only: Optional[bool] = None  # None = no change; True = own entries only; False = all visible
 
 class UserPermissionOverride(BaseModel):
     user_id: str
@@ -12418,7 +12419,15 @@ async def get_income_expenses(
 ):
     """Get all income and expense entries with optional filters and pagination"""
     query = {}
-    
+
+    # Own-entries-only restriction for data entry roles
+    ie_own_only = False
+    if user.get("role") != "admin":
+        user_role = await get_role_for_user(user)
+        if user_role.get("ie_own_entries_only"):
+            query["created_by"] = user["user_id"]
+            ie_own_only = True
+
     if entry_type:
         query["entry_type"] = entry_type
     if category:
@@ -12434,12 +12443,13 @@ async def get_income_expenses(
             query["date"]["$lte"] = end_date
         else:
             query["date"] = {"$lte": end_date}
-    
-    # Check cache
-    cache_key = get_cache_key("ie:list", page=page, page_size=page_size, 
-                              entry_type=entry_type, category=category, 
+
+    # Check cache — include user_id in key when restricted so each user gets their own cache
+    cache_key = get_cache_key("ie:list", page=page, page_size=page_size,
+                              entry_type=entry_type, category=category,
                               start_date=start_date, end_date=end_date,
-                              treasury_account_id=treasury_account_id, vendor_id=vendor_id)
+                              treasury_account_id=treasury_account_id, vendor_id=vendor_id,
+                              **({"user_id": user["user_id"]} if ie_own_only else {}))
     cached = get_cached(cache_key)
     if cached:
         return cached
