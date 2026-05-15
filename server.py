@@ -249,6 +249,8 @@ class RoleCreate(BaseModel):
     permissions: dict = {}  # {module: [actions]}
     is_system_role: bool = False
     hierarchy_level: int = 0  # Higher = more access
+    transaction_type_ids: Optional[List[str]] = None  # None = all types; list = specific types only
+    allowed_transaction_tags: Optional[List[str]] = None  # None = all tags; list = specific tag IDs only
 
 class RoleUpdate(BaseModel):
     display_name: Optional[str] = None
@@ -257,6 +259,8 @@ class RoleUpdate(BaseModel):
     hierarchy_level: Optional[int] = None
     is_active: Optional[bool] = None
     ie_own_entries_only: Optional[bool] = None  # None = no change; True = own entries only; False = all visible
+    transaction_type_ids: Optional[List[str]] = None  # None = no change; [] = clear restriction; list = specific types
+    allowed_transaction_tags: Optional[List[str]] = None  # None = no change; [] = clear restriction; list = tag IDs
 
 class UserPermissionOverride(BaseModel):
     user_id: str
@@ -8340,6 +8344,20 @@ async def get_transactions(
 
     if and_clauses:
         query["$and"] = and_clauses
+
+    # Role-based restrictions (type + tag)
+    if user.get("role") != "admin":
+        user_role = await get_role_for_user(user)
+        allowed_types = user_role.get("transaction_type_ids") if user_role else None
+        if allowed_types:
+            if "transaction_type" in query:
+                if query["transaction_type"] not in allowed_types:
+                    query["transaction_type"] = "__none__"
+            else:
+                query["transaction_type"] = {"$in": allowed_types}
+        allowed_tags = user_role.get("allowed_transaction_tags") if user_role else None
+        if allowed_tags:
+            query["transaction_tags"] = {"$in": allowed_tags}
 
     # No caching — always return fresh data from DB
 
@@ -18482,9 +18500,11 @@ async def create_role(request: Request, role_data: RoleCreate, user: dict = Depe
         "created_at": now.isoformat(),
         "updated_at": now.isoformat(),
         "created_by": user["user_id"],
-        "created_by_name": user["name"]
+        "created_by_name": user["name"],
+        "transaction_type_ids": role_data.transaction_type_ids,
+        "allowed_transaction_tags": role_data.allowed_transaction_tags,
     }
-    
+
     await db.roles.insert_one(role_doc)
     
     # Log the action
@@ -18516,8 +18536,13 @@ async def update_role(request: Request, role_id: str, role_data: RoleUpdate, use
     
     now = datetime.now(timezone.utc)
     updates = {k: v for k, v in role_data.model_dump().items() if v is not None}
+    # Handle list fields that can be explicitly cleared (empty list → None in DB)
+    if role_data.transaction_type_ids is not None:
+        updates["transaction_type_ids"] = role_data.transaction_type_ids if role_data.transaction_type_ids else None
+    if role_data.allowed_transaction_tags is not None:
+        updates["allowed_transaction_tags"] = role_data.allowed_transaction_tags if role_data.allowed_transaction_tags else None
     updates["updated_at"] = now.isoformat()
-    
+
     await db.roles.update_one({"role_id": role_id}, {"$set": updates})
     
     # Log the action
