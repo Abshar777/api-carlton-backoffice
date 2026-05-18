@@ -1074,6 +1074,15 @@ async def check_permission(user: dict, module: str, action: str) -> bool:
     
     return False
 
+async def get_role_for_user(user: dict) -> dict:
+    """Fetch the role document for a user using the same lookup pattern as get_user_permissions."""
+    role_name = user.get("role_id") or user.get("role", "")
+    role = await db.roles.find_one({"role_id": role_name}, {"_id": 0})
+    if not role:
+        role = await db.roles.find_one({"name": role_name}, {"_id": 0})
+    return role or {}
+
+
 def require_permission(module: str, action: str):
     """Decorator factory for permission checking"""
     async def permission_checker(user: dict = Depends(get_current_user)) -> dict:
