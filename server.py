@@ -5299,7 +5299,7 @@ async def batch_settle_psp_transactions(
         ]
         avg_rate = sum(rates) / len(rates) if rates else 1
         base_deductions = total_deductions / avg_rate if avg_rate else 0
-        treasury_amount = base_gross - base_deductions
+        treasury_amount = round(base_gross - base_deductions, 2)
     else:
         treasury_amount = convert_currency(net_amount, "USD", dest_currency)
 
@@ -10844,7 +10844,9 @@ async def approve_transaction(
 
             if is_psp_source:
                 # Source is a PSP account
-                psp_id = source_account_id  # Already has psp_ prefix
+                # Handle double-prefix case: frontend may send "psp_psp_XXXX" (routing prefix + actual ID)
+                # Actual PSP IDs in DB are stored as "psp_XXXX"
+                psp_id = source_account_id[4:] if source_account_id.startswith("psp_psp_") else source_account_id
                 psp_account = await db.psps.find_one({"psp_id": psp_id}, {"_id": 0})
                 if not psp_account:
                     raise HTTPException(status_code=404, detail="PSP account not found")
@@ -21673,6 +21675,24 @@ async def reinstate_list_psp_settlements(
             {"psp_id": {"$regex": search, "$options": "i"}},
         ]
     return await paginate_query(db.psp_settlements, query, page, page_size)
+
+
+@api_router.get("/reinstate/treasury-transfers")
+async def reinstate_list_treasury_transfers(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(25, ge=1, le=100),
+    search: str = Query(None),
+    user: dict = Depends(require_admin),
+):
+    query = {"transaction_type": "transfer_out"}
+    if search:
+        query["$or"] = [
+            {"transfer_id": {"$regex": search, "$options": "i"}},
+            {"reference": {"$regex": search, "$options": "i"}},
+            {"related_account_name": {"$regex": search, "$options": "i"}},
+            {"notes": {"$regex": search, "$options": "i"}},
+        ]
+    return await paginate_query(db.treasury_transactions, query, page, page_size)
 
 
 @api_router.get("/reinstate/transactions/{transaction_id}/preview")
