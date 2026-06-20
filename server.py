@@ -22361,6 +22361,140 @@ async def reinstate_list_treasury_transfers(
     }
 
 
+@api_router.get("/reinstate/treasury-transfers/{transfer_id}/preview")
+async def reinstate_treasury_transfer_preview(
+    transfer_id: str,
+    user: dict = Depends(require_admin),
+):
+    """Preview the balance changes that reinstating a treasury transfer would cause."""
+    legs = await db.treasury_transactions.find(
+        {"transfer_id": transfer_id}, {"_id": 0}
+    ).to_list(10)
+
+    if not legs:
+        raise HTTPException(status_code=404, detail="Transfer not found")
+
+    out_leg = next((t for t in legs if t.get("transaction_type") == "transfer_out"), None)
+    in_leg  = next((t for t in legs if t.get("transaction_type") == "transfer_in"),  None)
+
+    if not out_leg or not in_leg:
+        raise HTTPException(status_code=400, detail="Transfer legs incomplete — cannot preview")
+
+    source_id = out_leg["account_id"]
+    dest_id   = in_leg["account_id"]
+
+    source_acc = await db.treasury_accounts.find_one({"account_id": source_id}, {"_id": 0})
+    dest_acc   = await db.treasury_accounts.find_one({"account_id": dest_id},   {"_id": 0})
+
+    source_amount = abs(out_leg.get("amount", 0))
+    dest_amount   = in_leg.get("amount", 0)
+
+    balance_changes = []
+    if source_acc:
+        balance_changes.append({
+            "type": "treasury",
+            "account_id": source_id,
+            "account_name": source_acc.get("account_name", source_id),
+            "currency": source_acc.get("currency", out_leg.get("currency", "USD")),
+            "balance_before": source_acc.get("balance", 0),
+            "balance_after": source_acc.get("balance", 0) + source_amount,
+            "change": source_amount,
+            "description": "Source account restored (transfer_out reversed)",
+        })
+    if dest_acc:
+        balance_changes.append({
+            "type": "treasury",
+            "account_id": dest_id,
+            "account_name": dest_acc.get("account_name", dest_id),
+            "currency": dest_acc.get("currency", in_leg.get("currency", "USD")),
+            "balance_before": dest_acc.get("balance", 0),
+            "balance_after": dest_acc.get("balance", 0) - dest_amount,
+            "change": -dest_amount,
+            "description": "Destination account reversed (transfer_in removed)",
+        })
+
+    item = {
+        "transfer_id": transfer_id,
+        "source_account": source_acc.get("account_name", source_id) if source_acc else source_id,
+        "destination_account": dest_acc.get("account_name", dest_id) if dest_acc else dest_id,
+        "source_amount": source_amount,
+        "source_currency": out_leg.get("currency", "USD"),
+        "destination_amount": dest_amount,
+        "destination_currency": in_leg.get("currency", "USD"),
+        "exchange_rate": out_leg.get("exchange_rate"),
+        "notes": out_leg.get("notes"),
+        "created_at": out_leg.get("created_at"),
+        "created_by_name": out_leg.get("created_by_name"),
+    }
+
+    return {
+        "item": item,
+        "balance_changes": balance_changes,
+        "affected_records": [
+            {
+                "type": "info",
+                "description": f"2 treasury transaction records (transfer_out + transfer_in) will be deleted for transfer {transfer_id}",
+            }
+        ],
+        "vendor_stats": None,
+        "psp_changes": None,
+        "loan_changes": None,
+    }
+
+
+@api_router.post("/reinstate/treasury-transfers/{transfer_id}")
+async def reinstate_treasury_transfer(
+    request: Request,
+    transfer_id: str,
+    user: dict = Depends(require_admin),
+):
+    """Reinstate a treasury internal transfer: reverse both account balance changes and delete both legs."""
+    legs = await db.treasury_transactions.find(
+        {"transfer_id": transfer_id}, {"_id": 0}
+    ).to_list(10)
+
+    if not legs:
+        raise HTTPException(status_code=404, detail="Transfer not found")
+
+    out_leg = next((t for t in legs if t.get("transaction_type") == "transfer_out"), None)
+    in_leg  = next((t for t in legs if t.get("transaction_type") == "transfer_in"),  None)
+
+    if not out_leg or not in_leg:
+        raise HTTPException(
+            status_code=400,
+            detail="Transfer legs incomplete — cannot reinstate a partial transfer",
+        )
+
+    source_id     = out_leg["account_id"]
+    dest_id       = in_leg["account_id"]
+    source_amount = abs(out_leg.get("amount", 0))
+    dest_amount   = in_leg.get("amount", 0)
+
+    now = datetime.now(timezone.utc)
+
+    # Restore source account balance
+    await db.treasury_accounts.update_one(
+        {"account_id": source_id},
+        {"$inc": {"balance": source_amount}, "$set": {"updated_at": now.isoformat()}},
+    )
+    # Reverse destination account balance
+    await db.treasury_accounts.update_one(
+        {"account_id": dest_id},
+        {"$inc": {"balance": -dest_amount}, "$set": {"updated_at": now.isoformat()}},
+    )
+
+    # Delete both treasury_transaction legs
+    await db.treasury_transactions.delete_many({"transfer_id": transfer_id})
+
+    invalidate_treasury_cache()
+    await log_activity(
+        request, user, "reinstate", "treasury",
+        f"Reinstated treasury transfer {transfer_id}",
+        reference_id=transfer_id,
+    )
+    return {"message": "Treasury transfer reinstated successfully", "transfer_id": transfer_id}
+
+
 @api_router.get("/reinstate/transactions/{transaction_id}/preview")
 async def reinstate_transaction_preview(
     transaction_id: str,
