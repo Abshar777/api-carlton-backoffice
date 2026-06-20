@@ -15838,8 +15838,11 @@ async def get_vendor_transactions_report(
     user: dict = Depends(require_permission(Modules.REPORTS, Actions.VIEW)),
     vendor_id: Optional[str] = None,
     category: Optional[str] = None,      # vendor | treasury | psp | bank | usdt | all
+    psp_id: Optional[str] = None,
+    destination_account_id: Optional[str] = None,
     transaction_type: Optional[str] = None,  # deposit | withdrawal | all
     status: Optional[str] = None,
+    search: Optional[str] = None,
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
     page: int = 1,
@@ -15855,11 +15858,24 @@ async def get_vendor_transactions_report(
     if category and category != "all":
         query["destination_type"] = category
 
+    if psp_id and psp_id != "all":
+        query["psp_id"] = psp_id
+
+    if destination_account_id and destination_account_id != "all":
+        query["destination_account_id"] = destination_account_id
+
     if transaction_type and transaction_type != "all":
         query["transaction_type"] = transaction_type
 
     if status and status != "all":
         query["status"] = status
+
+    if search:
+        query["$or"] = [
+            {"client_name": {"$regex": search, "$options": "i"}},
+            {"reference": {"$regex": search, "$options": "i"}},
+            {"transaction_id": {"$regex": search, "$options": "i"}},
+        ]
 
     if start_date or end_date:
         date_f: dict = {}
@@ -22285,7 +22301,7 @@ async def reinstate_list_treasury_transfers(
     search: str = Query(None),
     user: dict = Depends(require_admin),
 ):
-    query = {"transaction_type": "transfer_out"}
+    query: dict = {"transaction_type": "transfer_out"}
     if search:
         query["$or"] = [
             {"transfer_id": {"$regex": search, "$options": "i"}},
@@ -22293,7 +22309,56 @@ async def reinstate_list_treasury_transfers(
             {"related_account_name": {"$regex": search, "$options": "i"}},
             {"notes": {"$regex": search, "$options": "i"}},
         ]
-    return await paginate_query(db.treasury_transactions, query, page, page_size)
+
+    total = await db.treasury_transactions.count_documents(query)
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    skip = (page - 1) * page_size
+
+    out_legs = (
+        await db.treasury_transactions.find(query, {"_id": 0})
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(page_size)
+        .to_list(page_size)
+    )
+
+    # Enrich with matching transfer_in leg so frontend has both account names and amounts
+    transfer_ids = [t["transfer_id"] for t in out_legs if t.get("transfer_id")]
+    in_legs = await db.treasury_transactions.find(
+        {"transfer_id": {"$in": transfer_ids}, "transaction_type": "transfer_in"},
+        {"_id": 0},
+    ).to_list(len(transfer_ids))
+    in_map = {t["transfer_id"]: t for t in in_legs}
+
+    items = []
+    for out in out_legs:
+        tid = out.get("transfer_id")
+        in_leg = in_map.get(tid, {})
+        items.append({
+            "transfer_id": tid,
+            "source_account_id": out.get("account_id"),
+            "source_account_name": in_leg.get("related_account_name", out.get("account_id")),
+            "source_amount": abs(out.get("amount", 0)),
+            "source_currency": out.get("currency", "USD"),
+            "destination_account_id": in_leg.get("account_id", out.get("related_account_id")),
+            "destination_account_name": out.get("related_account_name", in_leg.get("account_id", "-")),
+            "destination_amount": in_leg.get("amount", out.get("destination_amount", 0)),
+            "destination_currency": in_leg.get("currency", out.get("destination_currency", "USD")),
+            "exchange_rate": out.get("exchange_rate"),
+            "notes": out.get("notes"),
+            "created_at": out.get("created_at"),
+            "created_by_name": out.get("created_by_name"),
+            "out_tx_id": out.get("treasury_transaction_id"),
+            "in_tx_id": in_leg.get("treasury_transaction_id"),
+        })
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "page_size": page_size,
+        "total_pages": total_pages,
+    }
 
 
 @api_router.get("/reinstate/transactions/{transaction_id}/preview")
