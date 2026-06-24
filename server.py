@@ -4716,32 +4716,37 @@ async def get_psp_summary(
         }, {"_id": 0}).to_list(1000)
         
         pending_count = len(pending_txs)
-        pending_amount_gross = sum(tx.get("psp_net_amount", tx.get("amount", 0)) for tx in pending_txs)
-        
+        pending_amount_gross = sum((tx.get("psp_net_amount") or tx.get("amount") or 0) for tx in pending_txs)
+
         # Check for overdue settlements
         overdue_count = 0
         for tx in pending_txs:
             exp_date = tx.get("psp_expected_settlement_date")
-            if exp_date:
+            if exp_date and isinstance(exp_date, str):
                 exp_dt = datetime.fromisoformat(exp_date.replace('Z', '+00:00'))
                 if exp_dt.tzinfo is None:
                     exp_dt = exp_dt.replace(tzinfo=timezone.utc)
                 if exp_dt < now:
                     overdue_count += 1
-        
+            elif exp_date and isinstance(exp_date, datetime):
+                if exp_date.tzinfo is None:
+                    exp_date = exp_date.replace(tzinfo=timezone.utc)
+                if exp_date < now:
+                    overdue_count += 1
+
         # Calculate reserve fund held from pending transactions
-        reserve_fund_rate = psp.get("reserve_fund_rate", psp.get("chargeback_rate", 0)) / 100
+        reserve_fund_rate = (psp.get("reserve_fund_rate") or psp.get("chargeback_rate") or 0) / 100
         reserve_from_pending = 0
         for tx in pending_txs:
-            rf = tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0))
+            rf = (tx.get("psp_reserve_fund_amount") or tx.get("psp_chargeback_amount") or 0)
             if rf > 0:
                 reserve_from_pending += rf
             else:
-                reserve_from_pending += round(tx.get("amount", 0) * reserve_fund_rate, 2)
+                reserve_from_pending += round((tx.get("amount") or 0) * reserve_fund_rate, 2)
 
         # Pending Amount = Deposit Net - Reserve Fund - Withdrawals - Withdrawal Extra Commission
-        withdrawal_total = sum(tx.get("amount", 0) for tx in withdrawal_txs)
-        withdrawal_extra_comm = sum(tx.get("psp_withdrawal_extra_commission", 0) or 0 for tx in withdrawal_txs)
+        withdrawal_total = sum((tx.get("amount") or 0) for tx in withdrawal_txs)
+        withdrawal_extra_comm = sum((tx.get("psp_withdrawal_extra_commission") or 0) for tx in withdrawal_txs)
         pending_amount = max(round(pending_amount_gross - reserve_from_pending - withdrawal_total - withdrawal_extra_comm, 2), 0)
 
         # Total reserve held includes pending + settled unreleased
@@ -4757,26 +4762,26 @@ async def get_psp_summary(
                 {"psp_chargeback_amount": {"$gt": 0}}
             ]
         }, {"_id": 0, "psp_reserve_fund_amount": 1, "psp_chargeback_amount": 1, "reserve_fund_released": 1}).to_list(10000)
-        
+
         held_from_settled = sum(
-            tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0))
+            (tx.get("psp_reserve_fund_amount") or tx.get("psp_chargeback_amount") or 0)
             for tx in settled_with_reserve if not tx.get("reserve_fund_released")
         )
         total_reserve_held += held_from_settled
 
         # Get settlement destination
         dest = await db.treasury_accounts.find_one({"account_id": psp.get("settlement_destination_id")}, {"_id": 0})
-        
+
         result.append({
             **psp,
             "pending_transactions_count": pending_count,
             "pending_amount": pending_amount,
             "overdue_count": overdue_count,
             "total_reserve_fund_held": round(total_reserve_held, 2),
-            "settlement_destination_name": dest["account_name"] if dest else "Unknown",
+            "settlement_destination_name": dest.get("account_name", "Unknown") if dest else "Unknown",
             "settlement_destination_bank": dest.get("bank_name") if dest else None
         })
-    
+
     return {"items": result, "total": total, "page": page, "page_size": page_size, "total_pages": max(1, -(-total // page_size))}
 
 # Get PSP dashboard summary
@@ -4816,38 +4821,41 @@ async def get_psp_summary(
 
         pending_count = len(pending_txs)
         pending_amount_gross = sum(
-            tx.get("psp_net_amount", tx.get("amount", 0)) for tx in pending_txs
+            (tx.get("psp_net_amount") or tx.get("amount") or 0) for tx in pending_txs
         )
 
         # Check for overdue settlements
         overdue_count = 0
         for tx in pending_txs:
             exp_date = tx.get("psp_expected_settlement_date")
-            if exp_date:
+            if exp_date and isinstance(exp_date, str):
                 exp_dt = datetime.fromisoformat(exp_date.replace("Z", "+00:00"))
                 if exp_dt.tzinfo is None:
                     exp_dt = exp_dt.replace(tzinfo=timezone.utc)
                 if exp_dt < now:
                     overdue_count += 1
+            elif exp_date and isinstance(exp_date, datetime):
+                if exp_date.tzinfo is None:
+                    exp_date = exp_date.replace(tzinfo=timezone.utc)
+                if exp_date < now:
+                    overdue_count += 1
 
         # Calculate reserve fund held from pending transactions
-        reserve_fund_rate = (
-            psp.get("reserve_fund_rate", psp.get("chargeback_rate", 0)) / 100
-        )
+        reserve_fund_rate = (psp.get("reserve_fund_rate") or psp.get("chargeback_rate") or 0) / 100
         reserve_from_pending = 0
         for tx in pending_txs:
-            rf = tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0))
+            rf = (tx.get("psp_reserve_fund_amount") or tx.get("psp_chargeback_amount") or 0)
             if rf > 0:
                 reserve_from_pending += rf
             else:
                 reserve_from_pending += round(
-                    tx.get("amount", 0) * reserve_fund_rate, 2
+                    (tx.get("amount") or 0) * reserve_fund_rate, 2
                 )
 
         # Pending Amount = Deposit Net - Reserve Fund - Withdrawals - Withdrawal Extra Commission
-        withdrawal_total = sum(tx.get("amount", 0) for tx in withdrawal_txs)
+        withdrawal_total = sum((tx.get("amount") or 0) for tx in withdrawal_txs)
         withdrawal_extra_comm = sum(
-            tx.get("psp_withdrawal_extra_commission", 0) or 0 for tx in withdrawal_txs
+            (tx.get("psp_withdrawal_extra_commission") or 0) for tx in withdrawal_txs
         )
         pending_amount = max(
             round(
@@ -4883,7 +4891,7 @@ async def get_psp_summary(
         ).to_list(10000)
 
         held_from_settled = sum(
-            tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0))
+            (tx.get("psp_reserve_fund_amount") or tx.get("psp_chargeback_amount") or 0)
             for tx in settled_with_reserve
             if not tx.get("reserve_fund_released")
         )
@@ -4901,9 +4909,7 @@ async def get_psp_summary(
                 "pending_amount": pending_amount,
                 "overdue_count": overdue_count,
                 "total_reserve_fund_held": round(total_reserve_held, 2),
-                "settlement_destination_name": (
-                    dest["account_name"] if dest else "Unknown"
-                ),
+                "settlement_destination_name": dest.get("account_name", "Unknown") if dest else "Unknown",
                 "settlement_destination_bank": dest.get("bank_name") if dest else None,
             }
         )
