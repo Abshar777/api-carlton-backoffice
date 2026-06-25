@@ -4950,15 +4950,13 @@ async def update_psp_transaction_charges(
     now = datetime.now(timezone.utc)
 
     # Calculate old net for pending_settlement adjustment
-    old_extra_charges = tx.get("psp_extra_charges", 0) or 0
-    old_reserve_fund = (
-        tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0)) or 0
-    )
-    extra_commission = tx.get("psp_extra_commission", 0) or 0
+    old_extra_charges = tx.get("psp_extra_charges") or 0
+    old_reserve_fund = (tx.get("psp_reserve_fund_amount") or tx.get("psp_chargeback_amount") or 0)
+    extra_commission = tx.get("psp_extra_commission") or 0
 
     # Calculate new net amount (include extra_commission if it exists)
-    gross_amount = tx.get("amount", 0)
-    commission = tx.get("psp_commission_amount", 0)
+    gross_amount = tx.get("amount") or 0
+    commission = tx.get("psp_commission_amount") or 0
     new_net = round(
         gross_amount
         - commission
