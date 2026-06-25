@@ -4386,6 +4386,33 @@ async def create_settlement(request: Request, psp_id: str, user: dict = Depends(
 
     return await db.psp_settlements.find_one({"settlement_id": settlement_id}, {"_id": 0})
 
+@api_router.delete("/psp-settlements/{settlement_id}")
+async def cancel_settlement(request: Request, settlement_id: str, user: dict = Depends(require_permission(Modules.PSP, Actions.CREATE))):
+    """Cancel a PENDING PSP settlement — reverses PSP stats and unmarks transactions"""
+    settlement = await db.psp_settlements.find_one({"settlement_id": settlement_id}, {"_id": 0})
+    if not settlement:
+        raise HTTPException(status_code=404, detail="Settlement not found")
+    if settlement["status"] != PSPSettlementStatus.PENDING:
+        raise HTTPException(status_code=400, detail="Only PENDING settlements can be cancelled. Use reinstate for completed settlements.")
+
+    tx_ids = settlement.get("transaction_ids", [])
+    if tx_ids:
+        await db.transactions.update_many(
+            {"transaction_id": {"$in": tx_ids}},
+            {"$unset": {"settlement_id": "", "settlement_status": ""}},
+        )
+
+    await db.psps.update_one(
+        {"psp_id": settlement["psp_id"]},
+        {"$inc": {"pending_settlement": -settlement["net_amount"]}},
+    )
+
+    await db.psp_settlements.delete_one({"settlement_id": settlement_id})
+
+    invalidate_transaction_cache()
+    await log_activity(request, user, "delete", "psp", f"Cancelled PSP settlement {settlement_id}", reference_id=settlement_id)
+    return {"message": "PSP settlement cancelled successfully", "settlement_id": settlement_id}
+
 @api_router.post("/psp-settlements/{settlement_id}/complete")
 async def complete_settlement(request: Request, settlement_id: str, user: dict = Depends(require_permission(Modules.PSP, Actions.APPROVE))):
 
