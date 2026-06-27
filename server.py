@@ -5370,14 +5370,14 @@ async def batch_settle_psp_transactions(
         )
 
     # Calculate compound totals
-    gross_amount = sum(tx.get("amount", 0) for tx in selected_txs)
-    total_commission = sum(tx.get("psp_commission_amount", 0) for tx in selected_txs)
+    gross_amount = sum((tx.get("amount") or 0) for tx in selected_txs)
+    total_commission = sum((tx.get("psp_commission_amount") or 0) for tx in selected_txs)
     total_reserve = sum(
-        tx.get("psp_reserve_fund_amount", tx.get("psp_chargeback_amount", 0))
+        (tx.get("psp_reserve_fund_amount") or tx.get("psp_chargeback_amount") or 0)
         for tx in selected_txs
     )
-    total_extra = sum(tx.get("psp_extra_charges", 0) for tx in selected_txs)
-    total_gateway = sum(tx.get("psp_gateway_fee", 0) for tx in selected_txs)
+    total_extra = sum((tx.get("psp_extra_charges") or 0) for tx in selected_txs)
+    total_gateway = sum((tx.get("psp_gateway_fee") or 0) for tx in selected_txs)
     total_deductions = total_commission + total_reserve + total_extra + total_gateway
     net_amount = gross_amount - total_deductions
 
