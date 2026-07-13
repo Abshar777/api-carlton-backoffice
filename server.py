@@ -1587,7 +1587,7 @@ async def login(credentials: UserLogin, request: Request):
         )
     try:
         otp_html = f"""<div style="font-family:Arial,sans-serif;max-width:400px;margin:0 auto;padding:30px;background:#ffffff;color:#0f172a;border-radius:8px;">
-            <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">MILES CAPITALS</h2>
+            <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
             <p style="color:#64748b;text-align:center;">Your login verification code:</p>
             <div style="background:#f8fafc;padding:20px;border-radius:8px;text-align:center;margin:20px 0;">
                 <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#4f46e5;">{otp_code}</span>
@@ -1595,7 +1595,7 @@ async def login(credentials: UserLogin, request: Request):
             <p style="color:#64748b;text-align:center;font-size:12px;">This code expires in 5 minutes. Do not share it.</p></div>"""
         await send_email(
             to_emails=[user["email"]],
-            subject="Miles Capitals - Login Verification Code",
+            subject="Carlton Fx - Login Verification Code",
             html_content=otp_html,
             smtp_host=smtp_host,
             smtp_port=smtp_port,
@@ -2080,7 +2080,7 @@ async def forgot_password(data: dict = Body(...)):
     if smtp_email and smtp_password:
         try:
             reset_html = f"""<div style="font-family:Arial,sans-serif;max-width:400px;margin:0 auto;padding:30px;background:#ffffff;color:#0f172a;border-radius:8px;">
-                <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">MILES CAPITALS</h2>
+                <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
                 <p style="color:#64748b;text-align:center;">Password Reset Code</p>
                 <div style="background:#f8fafc;padding:20px;border-radius:8px;text-align:center;margin:20px 0;">
                     <span style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#4f46e5;">{otp_code}</span>
@@ -2088,7 +2088,7 @@ async def forgot_password(data: dict = Body(...)):
                 <p style="color:#64748b;text-align:center;font-size:12px;">This code expires in 10 minutes. If you didn't request this, ignore this email.</p></div>"""
             await send_email(
                 to_emails=[email],
-                subject="Miles Capitals - Password Reset Code",
+                subject="Carlton Fx - Password Reset Code",
                 html_content=reset_html,
                 smtp_host=smtp_host,
                 smtp_port=smtp_port,
@@ -4495,7 +4495,7 @@ async def send_dealing_pnl_email(
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <span style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">Miles Capitals</span>
+                    <span style="font-size:20px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;">Carlton Fx</span>
                     <p style="margin:4px 0 0;font-size:12px;color:#c7d2fe;">Financial Management Platform</p>
                   </td>
                   <td align="right">
@@ -4573,7 +4573,7 @@ async def send_dealing_pnl_email(
                 {lp_rows}
               </table>''' if lp_rows else ''}
 
-              <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">This is an automated Dealing P&amp;L report from Miles Capitals.</p>
+              <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">This is an automated Dealing P&amp;L report from Carlton Fx.</p>
             </td>
           </tr>
 
@@ -4582,7 +4582,7 @@ async def send_dealing_pnl_email(
             <td style="background:#f8fafc;padding:18px 32px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
-                  <td style="font-size:11px;color:#94a3b8;">© 2026 Miles Capitals. All rights reserved.</td>
+                  <td style="font-size:11px;color:#94a3b8;">© 2026 Carlton Fx. All rights reserved.</td>
                   <td align="right" style="font-size:11px;color:#94a3b8;">This is an automated message.</td>
                 </tr>
               </table>
@@ -21864,9 +21864,9 @@ async def send_approval_notification(notification_type: str, details: dict):
             return
 
         if notification_type == "transaction":
-            subject = f"Miles Capitals - New Transaction Pending Approval"
+            subject = f"Carlton Fx - New Transaction Pending Approval"
             html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#ffffff;color:#0f172a;border-radius:8px;">
-                <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">MILES CAPITALS</h2>
+                <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
                 <div style="background:#f8fafc;padding:20px;border-radius:8px;margin:15px 0;">
                     <h3 style="color:#fbbf24;margin:0 0 15px;">New Transaction Pending Approval</h3>
                     <table style="width:100%;font-size:13px;color:#64748b;">
@@ -21883,7 +21883,7 @@ async def send_approval_notification(notification_type: str, details: dict):
 
         elif notification_type == "settlement":
             html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#ffffff;color:#0f172a;border-radius:8px;">
-                <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">MILES CAPITALS</h2>
+                <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
                 <div style="background:#f8fafc;padding:20px;border-radius:8px;margin:15px 0;">
                     <h3 style="color:#fbbf24;margin:0 0 15px;">New Settlement Pending Approval</h3>
                     <table style="width:100%;font-size:13px;color:#64748b;">
@@ -21896,7 +21896,7 @@ async def send_approval_notification(notification_type: str, details: dict):
                     </table>
                 </div>
                 <p style="color:#64748b;text-align:center;font-size:12px;">Please review and approve/reject this settlement in the Back Office.</p></div>"""
-            subject = f"Miles Capitals - Settlement Pending Approval ({details.get('vendor_name', '')})"
+            subject = f"Carlton Fx - Settlement Pending Approval ({details.get('vendor_name', '')})"
         else:
             return
 
@@ -21969,7 +21969,7 @@ async def send_exchanger_notification(
         vendor_name = vendor.get("vendor_name", "Exchanger")
 
         if notification_type == "transaction":
-            subject = f"Miles Capitals - New Transaction Assigned"
+            subject = f"Carlton Fx - New Transaction Assigned"
             title = "New Transaction Assigned to You"
             color = "#4ade80" if details.get("type") == "deposit" else "#f87171"
             rows = f"""<tr><td style="padding:4px 0;color:#64748b;">Reference</td><td style="padding:4px 0;font-family:monospace;">{details.get('reference', '-')}</td></tr>
@@ -21977,7 +21977,7 @@ async def send_exchanger_notification(
                 <tr><td style="padding:4px 0;color:#64748b;">Client</td><td style="padding:4px 0;">{details.get('client', '-')}</td></tr>
                 <tr><td style="padding:4px 0;color:#64748b;">Amount</td><td style="padding:4px 0;font-weight:bold;font-size:16px;">{details.get('amount_display', '-')}</td></tr>"""
         elif notification_type == "ie":
-            subject = f"Miles Capitals - New I&E Entry Assigned"
+            subject = f"Carlton Fx - New I&E Entry Assigned"
             title = "New Income/Expense Entry Assigned"
             is_income = details.get("entry_type") == "income"
             color = "#4ade80" if is_income else "#f87171"
@@ -21985,7 +21985,7 @@ async def send_exchanger_notification(
                 <tr><td style="padding:4px 0;color:#64748b;">Category</td><td style="padding:4px 0;">{details.get('category', '-')}</td></tr>
                 <tr><td style="padding:4px 0;color:#64748b;">Amount</td><td style="padding:4px 0;font-weight:bold;font-size:16px;">{details.get('amount_display', '-')}</td></tr>"""
         elif notification_type == "loan":
-            subject = f"Miles Capitals - Loan Transaction Assigned"
+            subject = f"Carlton Fx - Loan Transaction Assigned"
             title = "New Loan Transaction Assigned"
             is_in = details.get("loan_type") == "repayment"
             color = "#4ade80" if is_in else "#f87171"
@@ -21993,7 +21993,7 @@ async def send_exchanger_notification(
                 <tr><td style="padding:4px 0;color:#64748b;">Borrower</td><td style="padding:4px 0;">{details.get('borrower', '-')}</td></tr>
                 <tr><td style="padding:4px 0;color:#64748b;">Amount</td><td style="padding:4px 0;font-weight:bold;font-size:16px;">{details.get('amount_display', '-')}</td></tr>"""
         elif notification_type == "settlement":
-            subject = f"Miles Capitals - Settlement Initiated"
+            subject = f"Carlton Fx - Settlement Initiated"
             title = "Settlement Initiated for Your Account"
             rows = f"""<tr><td style="padding:4px 0;color:#64748b;">Settlement ID</td><td style="padding:4px 0;font-family:monospace;">{details.get('settlement_id', '-')}</td></tr>
                 <tr><td style="padding:4px 0;color:#64748b;">Gross Amount</td><td style="padding:4px 0;font-weight:bold;">{details.get('gross_display', '-')}</td></tr>
@@ -22003,7 +22003,7 @@ async def send_exchanger_notification(
             return
 
         html = f"""<div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#ffffff;color:#0f172a;border-radius:8px;">
-            <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">MILES CAPITALS</h2>
+            <h2 style="color:#4f46e5;text-align:center;margin:0 0 20px;">CARLTON FX</h2>
             <div style="background:#f8fafc;padding:20px;border-radius:8px;margin:15px 0;">
                 <h3 style="color:#fbbf24;margin:0 0 15px;">{title}</h3>
                 <table style="width:100%;font-size:13px;color:#64748b;">{rows}
@@ -22145,11 +22145,11 @@ async def test_email_settings(
     try:
         await send_email(
             to_emails=settings["director_emails"],
-            subject="Miles Capitals - Test Email",
+            subject="Carlton Fx - Test Email",
             html_content=f"""
             <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #ffffff; color: white;">
                 <h2 style="color: #4f46e5;">Test Email Successful!</h2>
-                <p>This is a test email from Miles Capitals Back Office.</p>
+                <p>This is a test email from Carlton Fx Back Office.</p>
                 <p>If you received this, your email settings are configured correctly.</p>
                 <p style="color: #64748b; font-size: 12px;">Sent at: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}</p>
             </div>
@@ -22211,7 +22211,7 @@ async def send_daily_report_now(
 
         # Send to directors who have email notifications enabled
         now = datetime.now(timezone.utc)
-        subject = f"Miles Capitals Daily Report - {now.strftime('%Y-%m-%d')}"
+        subject = f"Carlton Fx Daily Report - {now.strftime('%Y-%m-%d')}"
         filtered_emails = await _filter_emails_by_preference(director_emails)
         if not filtered_emails:
             return {"message": "No recipients with email notifications enabled"}
@@ -22874,7 +22874,7 @@ async def generate_daily_report_html():
         <div class="container">
             <div class="header">
                 <div class="header-row">
-                    <h1>Miles Capitals</h1>
+                    <h1>Carlton Fx</h1>
                     <span class="header-badge">DAILY REPORT</span>
                 </div>
                 <p>Daily Business Report &mdash; {now.strftime('%B %d, %Y')}</p>
@@ -23051,7 +23051,7 @@ async def generate_daily_report_html():
             </div>
             
             <div class="footer">
-                <p>Miles Capitals &mdash; Daily Business Report</p>
+                <p>Carlton Fx &mdash; Daily Business Report</p>
                 <p>Generated at {now.strftime('%B %d, %Y at %H:%M UTC')} &bull; This is an automated message.</p>
             </div>
         </div>
@@ -23118,7 +23118,7 @@ async def send_daily_report():
             if filtered_directors:
                 await send_email(
                     to_emails=filtered_directors,
-                    subject=f"Miles Capitals - Daily Report ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
+                    subject=f"Carlton Fx - Daily Report ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
                     html_content=html_content,
                     smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
                     smtp_port=settings.get("smtp_port", 587),
@@ -23183,7 +23183,7 @@ async def send_report_now(
 
         await send_email(
             to_emails=filtered_directors,
-            subject=f"Miles Capitals - Daily Report ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
+            subject=f"Carlton Fx - Daily Report ({datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
             html_content=html_content,
             smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
             smtp_port=settings.get("smtp_port", 587),
@@ -23538,7 +23538,7 @@ async def generate_monthly_report_html(year: int = None, month: int = None):
     <body>
         <div class="container">
             <div class="header">
-                <h1>MILES CAPITALS</h1>
+                <h1>CARLTON FX</h1>
                 <p>Monthly Report - {month_name} {year}</p>
                 <p style="font-size:12px; color:#4f46e5;">{month_start} to {month_end}</p>
             </div>
@@ -23707,7 +23707,7 @@ async def generate_monthly_report_html(year: int = None, month: int = None):
 
             </div>
             <div class="footer">
-                <p>Miles Capitals - Monthly Report | Generated {now.strftime('%Y-%m-%d %H:%M UTC')}</p>
+                <p>Carlton Fx - Monthly Report | Generated {now.strftime('%Y-%m-%d %H:%M UTC')}</p>
                 <p style="margin-top:5px; font-size:10px; color:#666;">This is an automated report. Please contact admin for any discrepancies.</p>
             </div>
         </div>
@@ -23745,7 +23745,7 @@ async def send_monthly_report():
         if filtered_directors:
             await send_email(
                 to_emails=filtered_directors,
-                subject=f"Miles Capitals - Monthly Report ({month_name} {now.year})",
+                subject=f"Carlton Fx - Monthly Report ({month_name} {now.year})",
                 html_content=html_content,
                 smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
                 smtp_port=settings.get("smtp_port", 587),
@@ -23833,7 +23833,7 @@ async def send_monthly_report_now(
 
         await send_email(
             to_emails=filtered_directors,
-            subject=f"Miles Capitals - Monthly Report ({month_name} {y})",
+            subject=f"Carlton Fx - Monthly Report ({month_name} {y})",
             html_content=html_content,
             smtp_host=settings.get("smtp_host", "smtp.gmail.com"),
             smtp_port=settings.get("smtp_port", 587),
@@ -24261,7 +24261,7 @@ async def send_audit_alert_email(result: dict):
 
         html = f"""
         <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#ffffff;color:#64748b;padding:20px;border-radius:8px;">
-            <h1 style="color:#4f46e5;margin-bottom:4px;">Miles Capitals - Audit Alert</h1>
+            <h1 style="color:#4f46e5;margin-bottom:4px;">Carlton Fx - Audit Alert</h1>
             <p style="color:#64748b;margin-top:0;">{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}</p>
             <div style="text-align:center;margin:20px 0;">
                 <div style="display:inline-block;width:80px;height:80px;border-radius:50%;border:4px solid {color};line-height:80px;font-size:28px;font-weight:bold;color:{color};">{score}</div>
@@ -24290,7 +24290,7 @@ async def send_audit_alert_email(result: dict):
         if filtered_alert_emails:
             await send_email(
                 to_emails=filtered_alert_emails,
-                subject=f"Miles Capitals - Audit Alert (Score: {score}/100)",
+                subject=f"Carlton Fx - Audit Alert (Score: {score}/100)",
                 html_content=html,
                 smtp_host=smtp_settings.get("smtp_host", "smtp.gmail.com"),
                 smtp_port=smtp_settings.get("smtp_port", 587),
