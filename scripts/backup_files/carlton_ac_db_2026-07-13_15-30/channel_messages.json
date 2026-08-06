@@ -1,0 +1,281 @@
+[
+  {
+    "_id": "6a460ac671d0a4d9ca2f8a8c",
+    "msg_id": "cmsg_40bbc2d160ae",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "sdJA",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 2,
+    "created_at": "2026-07-02T06:52:54.584114+00:00"
+  },
+  {
+    "_id": "6a460acf71d0a4d9ca2f8a8d",
+    "msg_id": "cmsg_0c1076d56413",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "done",
+    "attachments": [],
+    "thread_root_id": "cmsg_40bbc2d160ae",
+    "created_at": "2026-07-02T06:53:03.829038+00:00"
+  },
+  {
+    "_id": "6a460ad371d0a4d9ca2f8a8e",
+    "msg_id": "cmsg_87d298159a89",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "credited ",
+    "attachments": [],
+    "thread_root_id": "cmsg_40bbc2d160ae",
+    "created_at": "2026-07-02T06:53:07.218277+00:00"
+  },
+  {
+    "_id": "6a460b8371d0a4d9ca2f8a8f",
+    "msg_id": "cmsg_5d03ad34d88a",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "testing message ",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-02T06:56:03.771375+00:00"
+  },
+  {
+    "_id": "6a460b8c71d0a4d9ca2f8a90",
+    "msg_id": "cmsg_1deeeeaad20d",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "hi",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-02T06:56:12.028148+00:00"
+  },
+  {
+    "_id": "6a4628361d84e2b17ac6d687",
+    "msg_id": "cmsg_61b0b0ccbbb8",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "HI",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-02T08:58:30.948485+00:00"
+  },
+  {
+    "_id": "6a46283e1d84e2b17ac6d688",
+    "msg_id": "cmsg_0eb13e31e750",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "HELO ",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-02T08:58:38.413458+00:00"
+  },
+  {
+    "_id": "6a4628501d84e2b17ac6d689",
+    "msg_id": "cmsg_5f6a062e99db",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "HI",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 1,
+    "created_at": "2026-07-02T08:58:56.898934+00:00"
+  },
+  {
+    "_id": "6a4628551d84e2b17ac6d68a",
+    "msg_id": "cmsg_428c854892d7",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "HI",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 1,
+    "created_at": "2026-07-02T08:59:01.925317+00:00"
+  },
+  {
+    "_id": "6a4628701d84e2b17ac6d68b",
+    "msg_id": "cmsg_5b871c017638",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "HI]",
+    "attachments": [],
+    "thread_root_id": "cmsg_428c854892d7",
+    "created_at": "2026-07-02T08:59:28.609320+00:00"
+  },
+  {
+    "_id": "6a46288e1d84e2b17ac6d68c",
+    "msg_id": "cmsg_b3f24cffb25f",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_b6301b1626e7",
+    "sender_name": "sahalkn",
+    "content": "jsnxxs",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-02T08:59:58.727171+00:00"
+  },
+  {
+    "_id": "6a4628a01d84e2b17ac6d68d",
+    "msg_id": "cmsg_f88a60adf9c8",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_b6301b1626e7",
+    "sender_name": "sahalkn",
+    "content": "kskks",
+    "attachments": [],
+    "thread_root_id": "cmsg_5f6a062e99db",
+    "created_at": "2026-07-02T09:00:16.300122+00:00"
+  },
+  {
+    "_id": "6a547300d9dd8f78e355364d",
+    "msg_id": "cmsg_27b8463e33d4",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "mklm'",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 1,
+    "created_at": "2026-07-13T05:09:20.076312+00:00"
+  },
+  {
+    "_id": "6a547493d9dd8f78e3553652",
+    "msg_id": "cmsg_4e1d575d2fa2",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_caecd4fb626c",
+    "sender_name": "Raneesh",
+    "content": "Hi",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-13T05:16:03.215628+00:00"
+  },
+  {
+    "_id": "6a5474c6d9dd8f78e3553653",
+    "msg_id": "cmsg_e310c6a96b53",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_caecd4fb626c",
+    "sender_name": "Raneesh",
+    "content": "",
+    "attachments": [
+      {
+        "filename": "WhatsApp Image 2026-07-07 at 6.39.54 PM.jpeg",
+        "content_type": "image/jpeg",
+        "size": 116416,
+        "url": "https://pub-8f8e5004f2ce4792b759204766030a39.r2.dev/channel-media/8d7d2fd098a64a81_WhatsApp Image 2026-07-07 at 6.39.54 PM.jpeg"
+      }
+    ],
+    "thread_root_id": null,
+    "reply_count": 3,
+    "created_at": "2026-07-13T05:16:53.351326+00:00"
+  },
+  {
+    "_id": "6a5474d2d9dd8f78e3553654",
+    "msg_id": "cmsg_7cb06e2157bd",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_caecd4fb626c",
+    "sender_name": "Raneesh",
+    "content": "done",
+    "attachments": [],
+    "thread_root_id": "cmsg_e310c6a96b53",
+    "created_at": "2026-07-13T05:17:06.333673+00:00"
+  },
+  {
+    "_id": "6a5474d6d9dd8f78e3553655",
+    "msg_id": "cmsg_842302b4fbcc",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_caecd4fb626c",
+    "sender_name": "Raneesh",
+    "content": "ok",
+    "attachments": [],
+    "thread_root_id": "cmsg_e310c6a96b53",
+    "created_at": "2026-07-13T05:17:10.759608+00:00"
+  },
+  {
+    "_id": "6a547504d9dd8f78e3553656",
+    "msg_id": "cmsg_a11bb524a30e",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_caecd4fb626c",
+    "sender_name": "Raneesh",
+    "content": "hi",
+    "attachments": [],
+    "thread_root_id": "cmsg_27b8463e33d4",
+    "created_at": "2026-07-13T05:17:56.469978+00:00"
+  },
+  {
+    "_id": "6a548e334709ee5a129e60a7",
+    "msg_id": "cmsg_57521be67364",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "jsad",
+    "attachments": [],
+    "thread_root_id": "cmsg_e310c6a96b53",
+    "created_at": "2026-07-13T07:05:23.800593+00:00"
+  },
+  {
+    "_id": "6a548e414709ee5a129e60a8",
+    "msg_id": "cmsg_e37c4f0dfe9c",
+    "channel_id": "ch_1749dc96ca45",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "TESTING ",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-13T07:05:37.855198+00:00"
+  },
+  {
+    "_id": "6a54bd6872d8c48723bfcc03",
+    "msg_id": "cmsg_3aa87de7a376",
+    "channel_id": "chan_9195c3d20362",
+    "sender_id": "user_381ca5142e07",
+    "sender_name": "Thasleem",
+    "content": "SADasffa\nthasleem test\nthasleemarifk07@gmail.com\nUSD 1.00\nAED 1.00",
+    "attachments": [],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-13T10:26:48.230529+00:00",
+    "is_tx_bot": true,
+    "tx_request_id": "txreq_c96a74ed49e2",
+    "tx_reference": "SADasffa",
+    "tx_type": "deposit",
+    "tx_status": "rejected"
+  },
+  {
+    "_id": "6a54cc3172d8c48723bfcc13",
+    "msg_id": "cmsg_dcbfa0456646",
+    "channel_id": "chan_cf5e53afef1e",
+    "sender_id": "user_ce187f3b6a5a",
+    "sender_name": "Aleena",
+    "content": "W-000508\nHeena  kausar Siddiqui\nheenagadkari5@gmail.com\nUSD 60.70\nINR 5,777.00",
+    "attachments": [
+      {
+        "filename": "proof.png",
+        "content_type": "image/png",
+        "url": "https://pub-8f8e5004f2ce4792b759204766030a39.r2.dev/proofs/900cfb8536514589_WhatsApp Image 2026-07-13 at 4.52.56 PM.jpeg"
+      }
+    ],
+    "thread_root_id": null,
+    "reply_count": 0,
+    "created_at": "2026-07-13T11:29:53.986743+00:00",
+    "is_tx_bot": true,
+    "tx_request_id": "txreq_239a66803d35",
+    "tx_reference": "W-000508",
+    "tx_type": "withdrawal",
+    "tx_status": "pending"
+  }
+]

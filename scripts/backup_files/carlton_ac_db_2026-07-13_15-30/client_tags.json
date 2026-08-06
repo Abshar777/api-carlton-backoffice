@@ -1,0 +1,66 @@
+[
+  {
+    "_id": "69e851d74704dcdc8366df5f",
+    "tag_id": "tag_7dce2a97",
+    "name": "EDU RE DEP",
+    "color": "#3B82F6",
+    "created_at": "2026-04-22T04:43:03.484756+00:00",
+    "created_by": "user_381ca5142e07"
+  },
+  {
+    "_id": "69ec3f4d40e4beae36335433",
+    "tag_id": "tag_70796847",
+    "name": "EDU CPW",
+    "color": "#3B82F6",
+    "created_at": "2026-04-25T04:13:01.384402+00:00",
+    "created_by": "user_381ca5142e07"
+  },
+  {
+    "_id": "69f1e678405c0a480c09c6bf",
+    "tag_id": "tag_081fb748",
+    "name": "CLT CREDIT",
+    "color": "#f73b3b",
+    "created_at": "2026-04-29T11:07:36.541277+00:00",
+    "created_by": "user_381ca5142e07"
+  },
+  {
+    "_id": "69f1e683405c0a480c09c6c0",
+    "tag_id": "tag_fd7c580e",
+    "name": "CLT REDEP",
+    "color": "#f73b3b",
+    "created_at": "2026-04-29T11:07:47.312757+00:00",
+    "created_by": "user_381ca5142e07"
+  },
+  {
+    "_id": "69f31643c9bb7176857a3f9b",
+    "tag_id": "tag_43ef9dcc",
+    "name": "CLT",
+    "color": "#f73b3b",
+    "created_at": "2026-04-30T08:43:47.870287+00:00",
+    "created_by": "user_381ca5142e07"
+  },
+  {
+    "_id": "69f31650c9bb7176857a3f9c",
+    "tag_id": "tag_2d59745c",
+    "name": "EDU CARLTON",
+    "color": "#3b48f7",
+    "created_at": "2026-04-30T08:44:00.418436+00:00",
+    "created_by": "user_381ca5142e07"
+  },
+  {
+    "_id": "69fb237bdfeeecd62d1ecd9c",
+    "tag_id": "tag_4b8afaad",
+    "name": "MASTER MANAGE",
+    "color": "#3bf76a",
+    "created_at": "2026-05-06T11:18:19.541655+00:00",
+    "created_by": "user_381ca5142e07"
+  },
+  {
+    "_id": "69fb3ce0e32720bc5d6da188",
+    "tag_id": "tag_eac986a7",
+    "name": "DELTA",
+    "color": "#3bf7ea",
+    "created_at": "2026-05-06T13:06:40.422775+00:00",
+    "created_by": "user_381ca5142e07"
+  }
+]

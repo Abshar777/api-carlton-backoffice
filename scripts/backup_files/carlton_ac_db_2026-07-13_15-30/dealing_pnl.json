@@ -1,0 +1,2036 @@
+[
+  {
+    "_id": "69c6e0572b4c3929351340ba",
+    "date": "2026-03-27",
+    "mt5_booked_pnl": -18800.0,
+    "mt5_floating_pnl": -4352485.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-03-27T19:53:59.835149+00:00",
+    "updated_by": "user_7984d6ad08fd",
+    "updated_by_name": "Shafeel",
+    "record_id": "dpnl_05dcd1729c6a",
+    "created_at": "2026-03-27T19:53:59.835149+00:00",
+    "created_by": "user_7984d6ad08fd",
+    "created_by_name": "Shafeel"
+  },
+  {
+    "_id": "69c6e1f4676af311c9294454",
+    "date": "2026-03-26",
+    "mt5_booked_pnl": -6216.0,
+    "mt5_floating_pnl": -4481830.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-03-27T20:00:52.246328+00:00",
+    "updated_by": "user_7984d6ad08fd",
+    "updated_by_name": "Shafeel",
+    "record_id": "dpnl_5693f1ab4992",
+    "created_at": "2026-03-27T20:00:52.246328+00:00",
+    "created_by": "user_7984d6ad08fd",
+    "created_by_name": "Shafeel"
+  },
+  {
+    "_id": "69cad50422f3e53557257774",
+    "date": "2026-03-30",
+    "mt5_booked_pnl": 492.0,
+    "mt5_floating_pnl": -4366601.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-03-30T19:54:44.758978+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_040f270cd9bd",
+    "created_at": "2026-03-30T19:54:44.758978+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69cc2c315e6612f6bc12f7ae",
+    "date": "2026-03-31",
+    "mt5_booked_pnl": 6095.0,
+    "mt5_floating_pnl": -4207648.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-03-31T20:18:57.227300+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_d0c4209610a2",
+    "created_at": "2026-03-31T20:18:57.227300+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69cd7bcf22f3e535572578bf",
+    "date": "2026-04-01",
+    "mt5_booked_pnl": 24056.0,
+    "mt5_floating_pnl": -4186351.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-01T20:10:55.251810+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_5fd16f9f45f1",
+    "created_at": "2026-04-01T20:10:55.251810+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69cecbf5ee1ccfe555734c3a",
+    "date": "2026-04-02",
+    "mt5_booked_pnl": -3631.0,
+    "mt5_floating_pnl": -4257841.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-02T20:05:09.053313+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_eff747023443",
+    "created_at": "2026-04-02T20:05:09.053313+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69d56251b7e2977c9e220175",
+    "date": "2026-04-06",
+    "mt5_booked_pnl": 3139.0,
+    "mt5_floating_pnl": -4267130.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-07T20:00:17.393119+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_1169cd67cb79",
+    "created_at": "2026-04-07T20:00:17.393119+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69d562938d3b32ce76c74def",
+    "date": "2026-04-07",
+    "mt5_booked_pnl": 29887.0,
+    "mt5_floating_pnl": -4272290.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-07T20:01:23.659040+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_57f0f6a4bd32",
+    "created_at": "2026-04-07T20:01:23.659040+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69d6b36cafac8e1034c80a78",
+    "date": "2026-04-08",
+    "mt5_booked_pnl": 5269.0,
+    "mt5_floating_pnl": -4255103.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-08T19:58:36.567078+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_d3978fdd7f7c",
+    "created_at": "2026-04-08T19:58:36.567078+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69d8044995811ad858163986",
+    "date": "2026-04-09",
+    "mt5_booked_pnl": 7982.0,
+    "mt5_floating_pnl": -4227854.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-09T19:55:53.155806+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_ba99f491b8b9",
+    "created_at": "2026-04-09T19:55:53.155806+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69d955d9ea82529a110d6ddd",
+    "date": "2026-04-10",
+    "mt5_booked_pnl": 3426.0,
+    "mt5_floating_pnl": -4228997.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-10T19:56:09.078030+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_c52c06d57423",
+    "created_at": "2026-04-10T19:56:09.078030+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69dd4b3ba42cd6face029ae0",
+    "date": "2026-04-13",
+    "mt5_booked_pnl": -9072.0,
+    "mt5_floating_pnl": -4246197.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-13T19:59:55.980666+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_7d69e6779c0a",
+    "created_at": "2026-04-13T19:59:55.980666+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69de9e7da42cd6face029c3d",
+    "date": "2026-04-14",
+    "mt5_booked_pnl": 2818.0,
+    "mt5_floating_pnl": -4183498.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-14T20:07:25.425787+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_57b7a6e8a755",
+    "created_at": "2026-04-14T20:07:25.425787+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69dfeede84a1c7c4af779415",
+    "date": "2026-04-15",
+    "mt5_booked_pnl": -7635.0,
+    "mt5_floating_pnl": -4201387.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-15T20:02:38.335649+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_8461f11b872f",
+    "created_at": "2026-04-15T20:02:38.335649+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69e13ecc84a1c7c4af7794f9",
+    "date": "2026-04-16",
+    "mt5_booked_pnl": 10419.0,
+    "mt5_floating_pnl": -4207069.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-16T19:55:56.023806+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_0c5e88a46c32",
+    "created_at": "2026-04-16T19:55:56.023806+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69e2917b90501325eb3b824e",
+    "date": "2026-04-17",
+    "mt5_booked_pnl": -2075.0,
+    "mt5_floating_pnl": -4159359.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-17T20:00:59.473052+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_86e166385f2f",
+    "created_at": "2026-04-17T20:00:59.473052+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69e684e190501325eb3b8509",
+    "date": "2026-04-20",
+    "mt5_booked_pnl": 9835.0,
+    "mt5_floating_pnl": -4189699.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-20T19:56:17.762796+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_f0bc6ea72025",
+    "created_at": "2026-04-20T19:56:17.762796+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69e7d7094704dcdc8366df4f",
+    "date": "2026-04-21",
+    "mt5_booked_pnl": -7542.0,
+    "mt5_floating_pnl": -4277487.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-21T19:59:05.773876+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_5dee4524bbb6",
+    "created_at": "2026-04-21T19:59:05.773876+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69e928a24704dcdc8366e0c8",
+    "date": "2026-04-22",
+    "mt5_booked_pnl": 2044.0,
+    "mt5_floating_pnl": -4219083.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-22T19:59:30.022053+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_d4e4886b30fa",
+    "created_at": "2026-04-22T19:59:30.022053+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69ea7b234704dcdc8366e1f1",
+    "date": "2026-04-23",
+    "mt5_booked_pnl": 5934.0,
+    "mt5_floating_pnl": -4249113.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-23T20:03:47.799395+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_cae7f2a0b2b6",
+    "created_at": "2026-04-23T20:03:47.799395+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69ebcc7640e4beae36335422",
+    "date": "2026-04-24",
+    "mt5_booked_pnl": -244.0,
+    "mt5_floating_pnl": -4240804.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-24T20:03:02.046191+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_58fee0e3ed55",
+    "created_at": "2026-04-24T20:03:02.046191+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69efc0f042592588a745ea47",
+    "date": "2026-04-27",
+    "mt5_booked_pnl": 6792.0,
+    "mt5_floating_pnl": -4272654.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-27T20:02:56.185290+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_041d60ea47ce",
+    "created_at": "2026-04-27T20:02:56.185290+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69f111e9405c0a480c09c61f",
+    "date": "2026-04-28",
+    "mt5_booked_pnl": -24074.0,
+    "mt5_floating_pnl": -4311047.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-28T20:00:41.929086+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_08eae4e47c56",
+    "created_at": "2026-04-28T20:00:41.929086+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69f26470405c0a480c09c768",
+    "date": "2026-04-29",
+    "mt5_booked_pnl": -10950.0,
+    "mt5_floating_pnl": -4330329.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-29T20:05:04.007509+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_0b09c09da2a4",
+    "created_at": "2026-04-29T20:05:04.007509+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69f3b2f0518694d3a8e4de3c",
+    "date": "2026-04-30",
+    "mt5_booked_pnl": -6299.0,
+    "mt5_floating_pnl": -4316532.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-04-30T19:52:16.430414+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_03b4ffd08d98",
+    "created_at": "2026-04-30T19:52:16.430414+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69f505aeae8f665b187d5666",
+    "date": "2026-05-01",
+    "mt5_booked_pnl": 20777.0,
+    "mt5_floating_pnl": -4330994.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-01T19:57:34.296094+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_c1b04941537c",
+    "created_at": "2026-05-01T19:57:34.296094+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69f8fd62dfeeecd62d1ecc20",
+    "date": "2026-05-04",
+    "mt5_booked_pnl": 1193.0,
+    "mt5_floating_pnl": -4385874.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-04T20:11:14.844442+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_9608042ae377",
+    "created_at": "2026-05-04T20:11:14.844442+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69fa4cc8dfeeecd62d1ecce9",
+    "date": "2026-05-05",
+    "mt5_booked_pnl": 474.0,
+    "mt5_floating_pnl": -4358532.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-05T20:02:16.228231+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_1f3a577ab1a9",
+    "created_at": "2026-05-05T20:02:16.228231+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69fb9fcde32720bc5d6da1d3",
+    "date": "2026-05-06",
+    "mt5_booked_pnl": -4271.0,
+    "mt5_floating_pnl": -4297676.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-06T20:08:45.169473+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_031125d45f1c",
+    "created_at": "2026-05-06T20:08:45.169473+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69fcef9ce90d708b5288620c",
+    "date": "2026-05-07",
+    "mt5_booked_pnl": -24635.0,
+    "mt5_floating_pnl": -4272496.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-07T20:01:32.092466+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_608226769a1b",
+    "created_at": "2026-05-07T20:01:32.092466+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "69fe40d3d9404e1cb3f30aaa",
+    "date": "2026-05-08",
+    "mt5_booked_pnl": 3926.0,
+    "mt5_floating_pnl": -4266946.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-08T20:00:19.317992+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_16c9e491ec23",
+    "created_at": "2026-05-08T20:00:19.317992+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a02350499930fb7d9f39d8c",
+    "date": "2026-05-11",
+    "mt5_booked_pnl": 2869.0,
+    "mt5_floating_pnl": -4233688.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-11T19:59:00.624930+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_31c268e8ebb2",
+    "created_at": "2026-05-11T19:59:00.624930+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a0386d2c6400f156a8f5407",
+    "date": "2026-05-12",
+    "mt5_booked_pnl": 3749.0,
+    "mt5_floating_pnl": -4229254.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-12T20:00:18.244289+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_b6d83226fcd9",
+    "created_at": "2026-05-12T20:00:18.244289+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a04d94313f64f4ce7813f4c",
+    "date": "2026-05-13",
+    "mt5_booked_pnl": 3318.0,
+    "mt5_floating_pnl": -4237747.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-13T20:04:19.064911+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_b2ff8bd08518",
+    "created_at": "2026-05-13T20:04:19.064911+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a062a64535027868d180ecf",
+    "date": "2026-05-14",
+    "mt5_booked_pnl": -1527.0,
+    "mt5_floating_pnl": -4277934.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-14T20:02:44.298656+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_f40f6b72cc92",
+    "created_at": "2026-05-14T20:02:44.298656+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a077b685987a95007775077",
+    "date": "2026-05-15",
+    "mt5_booked_pnl": -23346.0,
+    "mt5_floating_pnl": -4339835.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-15T20:00:40.986574+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_8657b8961bd0",
+    "created_at": "2026-05-15T20:00:40.986574+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a0b6f8083d660c6eff9f179",
+    "date": "2026-05-18",
+    "mt5_booked_pnl": 22447.0,
+    "mt5_floating_pnl": -4338016.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-18T19:58:56.334044+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_25340ff2470e",
+    "created_at": "2026-05-18T19:58:56.334044+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a0cc3a583d660c6eff9f31c",
+    "date": "2026-05-19",
+    "mt5_booked_pnl": 4219.0,
+    "mt5_floating_pnl": -4391042.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-19T20:10:13.599295+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_d7de84d705e7",
+    "created_at": "2026-05-19T20:10:13.599295+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a0e114c83d660c6eff9f4b3",
+    "date": "2026-05-20",
+    "mt5_booked_pnl": 1448.0,
+    "mt5_floating_pnl": -4356155.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-20T19:53:48.410106+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_033365f019df",
+    "created_at": "2026-05-20T19:53:48.410106+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a0f6594afb74b31191514cb",
+    "date": "2026-05-21",
+    "mt5_booked_pnl": -2756.0,
+    "mt5_floating_pnl": -4346914.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-21T20:05:40.138134+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_32c80a0fc9a4",
+    "created_at": "2026-05-21T20:05:40.138134+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a10b979afb74b31191515fd",
+    "date": "2026-05-22",
+    "mt5_booked_pnl": 8313.0,
+    "mt5_floating_pnl": -4370396.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-22T20:15:53.540686+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_c0652ae890e7",
+    "created_at": "2026-05-22T20:15:53.540686+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a14b30a55e62b9aa5c017db",
+    "date": "2026-05-25",
+    "mt5_booked_pnl": 7491.0,
+    "mt5_floating_pnl": -4331396.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-25T20:37:30.394484+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_f76c07a9dc73",
+    "created_at": "2026-05-25T20:37:30.394484+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a15fb5655e62b9aa5c01892",
+    "date": "2026-05-26",
+    "mt5_booked_pnl": 15919.0,
+    "mt5_floating_pnl": -4366229.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-26T19:58:14.750971+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_ddccdd8bb2fb",
+    "created_at": "2026-05-26T19:58:14.750971+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a174d1555e62b9aa5c0190d",
+    "date": "2026-05-27",
+    "mt5_booked_pnl": -33250.0,
+    "mt5_floating_pnl": -4398174.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-27T19:59:17.662104+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_f9c3be955c6c",
+    "created_at": "2026-05-27T19:59:17.662104+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a19ef7155e62b9aa5c01aab",
+    "date": "2026-05-28",
+    "mt5_booked_pnl": 2334.0,
+    "mt5_floating_pnl": -4397113.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-29T19:56:33.052780+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_c9cfa2cf7b5e",
+    "created_at": "2026-05-29T19:56:33.052780+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a19f03655e62b9aa5c01aad",
+    "date": "2026-05-29",
+    "mt5_booked_pnl": -19362.0,
+    "mt5_floating_pnl": -4376502.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-05-29T19:59:50.696718+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_20f38977e2cc",
+    "created_at": "2026-05-29T19:59:50.696718+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a1de33030c392d81f81fa75",
+    "date": "2026-06-01",
+    "mt5_booked_pnl": 3169.0,
+    "mt5_floating_pnl": -4391243.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-01T19:53:20.495044+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_b3e8e27fca1e",
+    "created_at": "2026-06-01T19:53:20.495044+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a1f349830c392d81f81fb15",
+    "date": "2026-06-02",
+    "mt5_booked_pnl": 1054.0,
+    "mt5_floating_pnl": -4400590.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-02T19:52:56.710241+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_8ce09e090374",
+    "created_at": "2026-06-02T19:52:56.710241+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a20873430c392d81f81fba6",
+    "date": "2026-06-03",
+    "mt5_booked_pnl": 3741.0,
+    "mt5_floating_pnl": -4428277.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-03T19:57:40.754093+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_e5ac48468b06",
+    "created_at": "2026-06-03T19:57:40.754093+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a21d73c30c392d81f81fc71",
+    "date": "2026-06-04",
+    "mt5_booked_pnl": -75151.0,
+    "mt5_floating_pnl": -4335949.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-04T19:51:24.859028+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_c6a256c46146",
+    "created_at": "2026-06-04T19:51:24.859028+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a271edea08670ce67723e5e",
+    "date": "2026-06-05",
+    "mt5_booked_pnl": -3661.0,
+    "mt5_floating_pnl": -4444147.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-08T19:58:22.009295+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_a99cc7e6bad8",
+    "created_at": "2026-06-08T19:58:22.009295+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a271eeea08670ce67723e60",
+    "date": "2026-06-08",
+    "mt5_booked_pnl": -761.0,
+    "mt5_floating_pnl": -4435059.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-08T19:58:38.878120+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_0d1105811eb7",
+    "created_at": "2026-06-08T19:58:38.878120+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a28744ea08670ce67723f00",
+    "date": "2026-06-09",
+    "mt5_booked_pnl": 46170.0,
+    "mt5_floating_pnl": -4523044.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-09T20:15:10.525793+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_da66d7e33933",
+    "created_at": "2026-06-09T20:15:10.525793+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a29c488a08670ce6772400b",
+    "date": "2026-06-10",
+    "mt5_booked_pnl": -26912.0,
+    "mt5_floating_pnl": -4590953.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-10T20:09:44.920954+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_0d509c444e67",
+    "created_at": "2026-06-10T20:09:44.920954+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a2c64eca08670ce677240fb",
+    "date": "2026-06-11",
+    "mt5_booked_pnl": -159911.0,
+    "mt5_floating_pnl": -4349161.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-12T19:58:36.473192+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_7be3ef5edaa5",
+    "created_at": "2026-06-12T19:58:36.473192+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a2c6507a08670ce677240fd",
+    "date": "2026-06-12",
+    "mt5_booked_pnl": -1535.0,
+    "mt5_floating_pnl": -4344831.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-12T19:59:03.443923+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_91e26b6d4a2b",
+    "created_at": "2026-06-12T19:59:03.443923+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a3058865bcde2bc937eb361",
+    "date": "2026-06-15",
+    "mt5_booked_pnl": -509.0,
+    "mt5_floating_pnl": -4283482.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-15T19:54:46.245560+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_15b2bacd06d9",
+    "created_at": "2026-06-15T19:54:46.245560+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a31a99c5bcde2bc937eb3cf",
+    "date": "2026-06-16",
+    "mt5_booked_pnl": -486.0,
+    "mt5_floating_pnl": -4277738.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-16T19:53:00.319167+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_73499f6ed2f6",
+    "created_at": "2026-06-16T19:53:00.319167+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a32fcc35bcde2bc937eb42f",
+    "date": "2026-06-17",
+    "mt5_booked_pnl": -4448.0,
+    "mt5_floating_pnl": -4323101.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-17T20:00:03.021696+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_8f5011584447",
+    "created_at": "2026-06-17T20:00:03.021696+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a344db85bcde2bc937eb48f",
+    "date": "2026-06-18",
+    "mt5_booked_pnl": -4010.0,
+    "mt5_floating_pnl": -4343478.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-18T19:57:44.519812+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_92f71addb8a9",
+    "created_at": "2026-06-18T19:57:44.519812+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a359f8c5bcde2bc937eb589",
+    "date": "2026-06-19",
+    "mt5_booked_pnl": 976.0,
+    "mt5_floating_pnl": -4373684.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-19T19:59:08.515941+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_2d321a4fb8d1",
+    "created_at": "2026-06-19T19:59:08.515941+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a39937f04fd4e5d4d34dc3f",
+    "date": "2026-06-22",
+    "mt5_booked_pnl": 705.0,
+    "mt5_floating_pnl": -4353956.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-22T19:56:47.146059+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_ee5b9673bd9f",
+    "created_at": "2026-06-22T19:56:47.146059+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a3ae61804fd4e5d4d34dd09",
+    "date": "2026-06-23",
+    "mt5_booked_pnl": 510.0,
+    "mt5_floating_pnl": -4396763.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-23T20:01:28.895862+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_349c1caa4610",
+    "created_at": "2026-06-23T20:01:28.895862+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a3c360d44c4424ae8c3a47d",
+    "date": "2026-06-24",
+    "mt5_booked_pnl": -17519.0,
+    "mt5_floating_pnl": -4448169.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-24T19:54:53.792422+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_2140feb8070c",
+    "created_at": "2026-06-24T19:54:53.792422+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a3d87781ad4c677f8841bfc",
+    "date": "2026-06-25",
+    "mt5_booked_pnl": 3163.0,
+    "mt5_floating_pnl": -4432743.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-25T19:54:32.721524+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_63ec3e028906",
+    "created_at": "2026-06-25T19:54:32.721524+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a3edc081ad4c677f8841d4e",
+    "date": "2026-06-26",
+    "mt5_booked_pnl": 1158.0,
+    "mt5_floating_pnl": -4419460.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-26T20:07:36.483027+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_0faa3f2fe28c",
+    "created_at": "2026-06-26T20:07:36.483027+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a42d01e1da05b4a38199add",
+    "date": "2026-06-29",
+    "mt5_booked_pnl": 25295.0,
+    "mt5_floating_pnl": -4454186.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-29T20:05:50.110231+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_c8abfb1c959c",
+    "created_at": "2026-06-29T20:05:50.110231+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a441f2c1da05b4a38199b48",
+    "date": "2026-06-30",
+    "mt5_booked_pnl": -2565.0,
+    "mt5_floating_pnl": -4454020.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-06-30T19:55:24.601900+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_94f6ebeb51e8",
+    "created_at": "2026-06-30T19:55:24.601900+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a46c3441d84e2b17ac6d6d4",
+    "date": "2026-07-01",
+    "mt5_booked_pnl": -32636.0,
+    "mt5_floating_pnl": -4422846.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-07-02T20:00:04.377680+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_f4100f8e757c",
+    "created_at": "2026-07-02T20:00:04.377680+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a46c3551d84e2b17ac6d6d6",
+    "date": "2026-07-02",
+    "mt5_booked_pnl": -5391.0,
+    "mt5_floating_pnl": -4394372.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-07-02T20:00:21.065067+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_7c7615dea8bc",
+    "created_at": "2026-07-02T20:00:21.065067+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a4813c4acbf57bed5fbb5fc",
+    "date": "2026-07-03",
+    "mt5_booked_pnl": -5718.0,
+    "mt5_floating_pnl": -4349683.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-07-03T19:55:48.629972+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_faae5360d8c1",
+    "created_at": "2026-07-03T19:55:48.629972+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a4c274610d26b2e70164371",
+    "date": "2026-07-05",
+    "mt5_booked_pnl": 947.0,
+    "mt5_floating_pnl": -4360638.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-07-06T22:08:06.796491+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_6030aa8d8ed6",
+    "created_at": "2026-07-06T22:08:06.796491+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a4d5ce8e17c2aa138334fca",
+    "date": "2026-07-07",
+    "mt5_booked_pnl": -921.0,
+    "mt5_floating_pnl": -4378399.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-07-07T20:09:12.889413+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_5f163ee8bb3c",
+    "created_at": "2026-07-07T20:09:12.889413+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a4ffcee0ce03dc7d3be7486",
+    "date": "2026-07-08",
+    "mt5_booked_pnl": 22319.0,
+    "mt5_floating_pnl": -4407282.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-07-09T19:56:30.678889+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_3016aaca9cc3",
+    "created_at": "2026-07-09T19:56:30.678889+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a4ffd0b0ce03dc7d3be7488",
+    "date": "2026-07-09",
+    "mt5_booked_pnl": 4032.0,
+    "mt5_floating_pnl": -4380902.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-07-09T19:56:59.775835+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_9446fe0348a4",
+    "created_at": "2026-07-09T19:56:59.775835+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  },
+  {
+    "_id": "6a51513a079fd0b6314a60a4",
+    "date": "2026-07-10",
+    "mt5_booked_pnl": 2999.0,
+    "mt5_floating_pnl": -4401834.0,
+    "lp_entries": [
+      {
+        "lp_id": "lp_a1efce874118",
+        "lp_name": "ADSS ",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      },
+      {
+        "lp_id": "lp_6231c2cfe52a",
+        "lp_name": "VPFX N",
+        "booked_pnl": 0.0,
+        "floating_pnl": 0.0
+      }
+    ],
+    "mt5_screenshot": null,
+    "lp_screenshot": null,
+    "notes": "",
+    "updated_at": "2026-07-10T20:08:26.391319+00:00",
+    "updated_by": "user_944cc8b934e3",
+    "updated_by_name": "hashir",
+    "record_id": "dpnl_b6b84fcf78b4",
+    "created_at": "2026-07-10T20:08:26.391319+00:00",
+    "created_by": "user_944cc8b934e3",
+    "created_by_name": "hashir"
+  }
+]

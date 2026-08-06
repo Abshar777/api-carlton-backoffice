@@ -1,0 +1,44 @@
+[
+  {
+    "_id": "69c6ad90c047bfb5ecd22eb1",
+    "updated_at": "2026-03-31T10:18:40.849314+00:00",
+    "updated_by": "user_003f56f101a3",
+    "report_enabled": true,
+    "setting_type": "email",
+    "created_at": "2026-03-27T16:17:20.585437+00:00",
+    "director_emails": [
+      "7209safvan@gmail.com",
+      "nasrudheennasru15@gmail.com",
+      "Safeer@deltainstitutions.com",
+      "muhassin.mh@gmail.com"
+    ],
+    "monthly_report_enabled": false,
+    "report_time": "03:00",
+    "smtp_email": "no-reply@carltonfx.net",
+    "smtp_from_email": "no-reply@carltonfx.net",
+    "smtp_host": "smtp.gmail.com",
+    "smtp_password": "yfunixgztbwlptjf",
+    "smtp_port": 587
+  },
+  {
+    "_id": "69c6b084e25a37ddba99ba9c",
+    "setting_type": "manual_fx_rates",
+    "rates": {
+      "AED": 0.2722,
+      "EUR": 1.15,
+      "INR": 0.0108,
+      "USDT": 1
+    },
+    "updated_at": "2026-07-10T04:45:42.099712+00:00",
+    "updated_by": "user_381ca5142e07",
+    "updated_by_name": "Thasleem"
+  },
+  {
+    "_id": "6a4f9b8dfaa22b8350dbc302",
+    "setting_type": "security",
+    "twofa_enabled": true,
+    "updated_at": "2026-07-10T04:45:36.894419+00:00",
+    "updated_by": "user_381ca5142e07",
+    "session_timeout_hours": 4
+  }
+]

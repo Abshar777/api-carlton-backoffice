@@ -1,0 +1,673 @@
+[
+  {
+    "_id": "69ca7ec02e20dd436c24c07d",
+    "log_id": "log_2d92f085f066",
+    "action": "role_updated",
+    "module": "roles",
+    "details": "Updated role: Viewer",
+    "changes": {
+      "display_name": "Viewer",
+      "description": "Read-only access to selected modules",
+      "permissions": {
+        "dashboard": [
+          "view"
+        ],
+        "clients": [
+          "view"
+        ],
+        "transactions": [
+          "view"
+        ],
+        "exchangers": [
+          "view"
+        ],
+        "messages": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transaction_requests": [
+          "view"
+        ]
+      },
+      "hierarchy_level": 10,
+      "updated_at": "2026-03-30T13:46:40.173744+00:00"
+    },
+    "user_id": "user_003f56f101a3",
+    "user_name": "SAFVAN",
+    "created_at": "2026-03-30T13:46:40.173744+00:00"
+  },
+  {
+    "_id": "69cf8cd48dff74ec99526b5d",
+    "log_id": "log_16a6d47c3373",
+    "action": "role_updated",
+    "module": "roles",
+    "details": "Updated role: Admin",
+    "changes": {
+      "display_name": "Admin",
+      "description": "Full system access with all permissions",
+      "permissions": {
+        "dashboard": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "clients": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transactions": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "treasury": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "lp_management": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "income_expenses": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "loans": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "debts": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "psp": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "exchangers": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "reconciliation": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "audit": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "logs": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "reports": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "settings": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "users": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "roles": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "messages": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "approvals": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transaction_requests": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "reinstate": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ]
+      },
+      "hierarchy_level": 100,
+      "updated_at": "2026-04-03T09:48:04.010530+00:00"
+    },
+    "user_id": "user_832375a381d3",
+    "user_name": "abshar",
+    "created_at": "2026-04-03T09:48:04.010530+00:00"
+  },
+  {
+    "_id": "69e9e6cf4704dcdc8366e148",
+    "log_id": "log_c38e24cafa58",
+    "action": "role_updated",
+    "module": "roles",
+    "details": "Updated role: CRM SUB ADMIN",
+    "changes": {
+      "display_name": "CRM SUB ADMIN",
+      "description": "",
+      "permissions": {
+        "clients": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transactions": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "messages": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transaction_requests": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "psp": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "exchangers": [
+          "view",
+          "create"
+        ],
+        "treasury": [
+          "view"
+        ]
+      },
+      "hierarchy_level": 50,
+      "updated_at": "2026-04-23T09:30:55.578646+00:00"
+    },
+    "user_id": "user_381ca5142e07",
+    "user_name": "Thasleem",
+    "created_at": "2026-04-23T09:30:55.578646+00:00"
+  },
+  {
+    "_id": "69eb2d14f5180477f7ec97e8",
+    "log_id": "log_a7662dd212aa",
+    "action": "role_updated",
+    "module": "roles",
+    "details": "Updated role: CRM SUB ADMIN",
+    "changes": {
+      "display_name": "CRM SUB ADMIN",
+      "description": "",
+      "permissions": {
+        "clients": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transactions": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "messages": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transaction_requests": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "psp": [
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "exchangers": [
+          "create"
+        ]
+      },
+      "hierarchy_level": 50,
+      "updated_at": "2026-04-24T08:43:00.927542+00:00"
+    },
+    "user_id": "user_381ca5142e07",
+    "user_name": "Thasleem",
+    "created_at": "2026-04-24T08:43:00.927542+00:00"
+  },
+  {
+    "_id": "69eb2d4af5180477f7ec97eb",
+    "log_id": "log_96d593b4d13f",
+    "action": "role_updated",
+    "module": "roles",
+    "details": "Updated role: CRM SUB ADMIN",
+    "changes": {
+      "display_name": "CRM SUB ADMIN",
+      "description": "",
+      "permissions": {
+        "clients": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transactions": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "messages": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transaction_requests": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "psp": [
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export",
+          "listing"
+        ],
+        "exchangers": [
+          "create",
+          "listing"
+        ],
+        "treasury": [
+          "listing"
+        ]
+      },
+      "hierarchy_level": 50,
+      "updated_at": "2026-04-24T08:43:54.467329+00:00"
+    },
+    "user_id": "user_381ca5142e07",
+    "user_name": "Thasleem",
+    "created_at": "2026-04-24T08:43:54.467329+00:00"
+  },
+  {
+    "_id": "69f1e63a405c0a480c09c6bb",
+    "log_id": "log_ca606d9b08db",
+    "action": "role_updated",
+    "module": "roles",
+    "details": "Updated role: Crm admin",
+    "changes": {
+      "display_name": "Crm admin",
+      "description": "",
+      "permissions": {
+        "clients": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "lp_management": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "reports": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "messages": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transactions": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transaction_requests": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "psp": [
+          "listing",
+          "create"
+        ],
+        "exchangers": [
+          "listing",
+          "create"
+        ],
+        "treasury": [
+          "listing",
+          "create"
+        ]
+      },
+      "hierarchy_level": 50,
+      "updated_at": "2026-04-29T11:06:34.290319+00:00"
+    },
+    "user_id": "user_381ca5142e07",
+    "user_name": "Thasleem",
+    "created_at": "2026-04-29T11:06:34.290319+00:00"
+  },
+  {
+    "_id": "6a0aaebc5987a95007775141",
+    "log_id": "log_722b99cbe0bc",
+    "action": "role_updated",
+    "module": "roles",
+    "details": "Updated role: Crm admin",
+    "changes": {
+      "display_name": "Crm admin",
+      "description": "",
+      "permissions": {
+        "clients": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "lp_management": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "reports": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "messages": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transactions": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transaction_requests": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "psp": [
+          "listing",
+          "create"
+        ],
+        "exchangers": [
+          "listing",
+          "create"
+        ],
+        "treasury": [
+          "listing",
+          "create"
+        ]
+      },
+      "hierarchy_level": 50,
+      "ie_own_entries_only": false,
+      "transaction_type_ids": [
+        "deposit",
+        "withdrawal",
+        "transfer",
+        "commission",
+        "rebate",
+        "adjustment"
+      ],
+      "allowed_client_tags": [
+        "tag_43ef9dcc",
+        "tag_081fb748",
+        "tag_fd7c580e",
+        "tag_eac986a7",
+        "tag_2d59745c",
+        "tag_70796847",
+        "tag_4b8afaad",
+        "tag_7dce2a97"
+      ],
+      "updated_at": "2026-05-18T06:16:28.688029+00:00"
+    },
+    "user_id": "user_832375a381d3",
+    "user_name": "abshar",
+    "created_at": "2026-05-18T06:16:28.688029+00:00"
+  },
+  {
+    "_id": "6a0aaed65987a95007775145",
+    "log_id": "log_c09460ab856e",
+    "action": "role_updated",
+    "module": "roles",
+    "details": "Updated role: Crm admin",
+    "changes": {
+      "display_name": "Crm admin",
+      "description": "",
+      "permissions": {
+        "clients": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "lp_management": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "reports": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "messages": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transactions": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "transaction_requests": [
+          "view",
+          "create",
+          "edit",
+          "delete",
+          "approve",
+          "export"
+        ],
+        "psp": [
+          "listing",
+          "create"
+        ],
+        "exchangers": [
+          "listing",
+          "create"
+        ],
+        "treasury": [
+          "listing",
+          "create"
+        ]
+      },
+      "hierarchy_level": 50,
+      "ie_own_entries_only": false,
+      "updated_at": "2026-05-18T06:16:54.143674+00:00"
+    },
+    "user_id": "user_832375a381d3",
+    "user_name": "abshar",
+    "created_at": "2026-05-18T06:16:54.143674+00:00"
+  }
+]
